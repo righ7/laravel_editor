@@ -1,0 +1,18 @@
+<?php
+
+namespace App\Admin\Models\GoodsCard;
+
+use Illuminate\Database\Eloquent\Model;
+
+class GoodsGroupDetail extends Model
+{
+    protected $table = 'goods_group_detail';
+    protected $guarded = [];
+    const CREATED_AT = 'create_time';
+    const UPDATED_AT = 'update_time';
+
+    public function goodsGroup()
+    {
+        return $this->belongsTo('App\Admin\Models\GoodsCard\GoodsGroup');
+    }
+}

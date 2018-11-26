@@ -1,0 +1,161 @@
+<?php $__env->startSection('after-styles'); ?>
+	<link rel="stylesheet" href="<?php echo e(admin_asset("/css/indexCrop.css")); ?>">
+	<link rel="stylesheet" href="<?php echo e(admin_asset("/css/Jcrop/jquery.Jcrop.min.css")); ?>">
+	<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+
+<?php $__env->stopSection(); ?>
+<?php $__env->startSection('title', trans('创建文章') . ' | ' . trans('全球时尚')); ?>
+
+<?php $__env->startSection('page-header'); ?>
+	<h1>
+		<?php echo e(trans('创建文章')); ?>
+
+		<small><?php echo e(trans('全球时尚')); ?></small>
+	</h1>
+<?php $__env->stopSection(); ?>
+
+<?php $__env->startSection('content'); ?>
+	<div class="content-box">
+		<div class="content-box-left">
+			<div class="form-group titleBox">
+				<input type="text" class="form-control" id="titleInp"  class="titleInp" placeholder="请输入4～19个汉字的标题，结尾不能为句号或叹号">
+				<span class="title_tip">0/19</span>
+			</div>
+			<div class="leadsBox">
+				<textarea class="form-control leads" rows="3" placeholder="请输入10～100个汉字的导语"></textarea>
+				<span class="leads_tip">0/100</span>
+			</div>
+
+			<div class="addBtnBox">
+				<button type="button" class="btn btn-primary addIntBtn">添加段落导语</button>
+				<button type="button" class="btn btn-primary addImgBtn">添加图片</button>
+				<button type="button" class="btn btn-primary addBabyBtn">添加宝贝</button>
+				<label class="checkbox-inline isLocationLabe">
+					<input type="checkbox" id="isLocation" value=""> 是否定位模块
+				</label>
+			</div>
+			<div id="sortable"></div>
+
+			<h5>
+				*添加封面
+				<small>请上传尺寸不小于750*422px的封面图，优质清晰的封面有利于推荐，请勿使用gif或带大量文字的图片</small>
+			</h5>
+			<div class="radio-inline addCover">
+				<label class="radio-inline">
+					<input type="radio" name="inlineRadioOptions" id="inlineRadio1" value="oneImg" checked> 单图
+				</label>
+				<label class="radio-inline">
+					<input type="radio" name="inlineRadioOptions" id="inlineRadio2" value="threeImg"> 三图
+				</label>
+				<div class="oneImgBox">
+					<span class="ImgBox">+</span>
+					<span class="myImgBox">
+						<img class="myImg" width="164" height="92" />
+					</span>
+				</div>
+				<div class="threeImgBox">
+					<div class="sinImgBox">
+						<span class="ImgBox">+</span>
+						<span class="myImgBox">
+							<img class="myImg" width="164" height="92" />
+						</span>
+					</div>
+					<div class="sinImgBox">
+						<span class="ImgBox">+</span>
+						<span class="myImgBox">
+							<img class="myImg" width="164" height="92" />
+						</span>
+					</div>
+					<div class="sinImgBox">
+						<span class="ImgBox">+</span>
+						<span class="myImgBox">
+							<img class="myImg" width="164" height="92" />
+						</span>
+					</div>
+				</div>
+
+			</div>
+			<div class="dialogCover">
+				<button type="button" class="btn btn-primary selImgBtn">选择图片</button>
+				<button type="button" class="btn btn-success sureImgBtn">确定</button>
+				<button type="button" class="btn btn-warning closeImgBtn">取消</button>
+				<div class="head">
+					<img id="target" />
+					<input type="file" id="file" style="display: none;"/>
+				</div>
+
+				<div id="preview-pane">
+					<div class="preview-container">
+						<img src="" class="jcrop-preview" alt="Preview"  id="Preview"/>
+					</div>
+				</div>
+
+				<canvas id="myCan" width="750" height="422"></canvas>
+				
+					
+					
+				
+			</div>
+
+			<h5>
+				*补充封面图
+				<small>上传一张1:1比例补充封面图，图片尺寸不小于513x513.优质封面将有利于首页推荐</small>
+			</h5>
+			<div class="radio-inline supCover">
+				<div class="oneImgBox">
+					<span class="ImgBox">+</span>
+					<span class="myImgBox">
+						<img class="myImg" width="164" height="164" />
+					</span>
+				</div>
+			</div>
+			<div class="dialogCoverSup">
+				<button type="button" class="btn btn-primary selImgBtn">选择图片</button>
+				<button type="button" class="btn btn-success sureImgBtn">确定</button>
+				<button type="button" class="btn btn-warning closeImgBtn">取消</button>
+				<div class="head">
+					<img id="tarsup"/>
+					<input type="file" id="filesup" style="display: none;"/>
+				</div>
+				<canvas id="supCan" width="513" height="513"></canvas>
+
+			</div>
+
+			<div class="selectBox">
+				<strong>本文目标人群</strong>
+				<select class="peopleOne">
+				</select>
+				<select class="peopleTwo">
+				</select>
+			</div>
+
+			<div class="classBox">
+				<strong>分类</strong>
+				<div  class="classSingle">
+					<span class="classParent"></span>
+					<div class="classChild"></div>
+				</div>
+			</div>
+
+			<div class="saveBtnBox">
+				<?php echo e(csrf_field()); ?>
+
+				<button type="button" class="btn btn-primary publishBtn">发布</button>
+				<button type="button" class="btn btn-default previewBtn">预览</button>
+				<button type="button" class="btn btn-default draftBtn">存草稿</button>
+			</div>
+		</div>
+	</div>
+
+<?php $__env->stopSection(); ?>
+
+<?php $__env->startSection('after-scripts'); ?>
+	<script src="<?php echo e(admin_asset ('/js/layer/layer.js')); ?>"></script>
+	<script src="<?php echo e(admin_asset ('/js/Jcrop/jquery.Jcrop.min.js')); ?>"></script>
+	<script src="<?php echo e(admin_asset ('/js/indexCrop.js')); ?>"></script>
+	<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+	<script src="<?php echo e(admin_asset ('/js/admin/addGoods.js')); ?>"></script>
+<?php $__env->stopSection(); ?>
+
+
+<?php echo $__env->make('backend.layouts.index', array_except(get_defined_vars(), array('__data', '__path')))->render(); ?>

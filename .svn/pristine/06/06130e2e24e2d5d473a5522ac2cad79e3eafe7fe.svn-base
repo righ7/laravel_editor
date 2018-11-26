@@ -1,0 +1,153 @@
+<?php
+
+use Illuminate\Routing\Router;
+
+
+Admin::registerAuthRoutes();
+
+Route::group([
+    'prefix'        => config('admin.route.prefix'),
+    'namespace'     => config('admin.route.namespace'),
+    'middleware'    => config('admin.route.middleware'),
+], function (Router $router) {
+
+    $router->get('/', 'HomeController@index')->name('admin');
+    //文章
+    Route::group(['namespace' => 'Article'], function () {
+        Route::resource('articles','MyPublishController');
+        Route::resource('ttarticles','TtMyPublishController');
+
+
+        Route::group(['prefix' => 'article/{article}'], function() {
+            //文章预览页面
+            Route::any('preview', 'ArticlePublicController@ArticlePreview')->name('article.preview');
+        });
+        Route::any('article/get_preview_data', 'ArticlePublicController@getArticleData')->name('article.get_preview_data');
+
+        Route::post('articles/change_article_status/{id}','MyPublishController@changeArticleStatus')->name('articles/change_article_status');
+
+        //敏感词列表
+        Route::resource('article/sensitive_word_list','ArticleSensitiveWordController');
+        //全网好文
+        Route::resource('article/day_good_article','ArticleDayGoodArticleController');
+
+        Route::any('article/day_good_article_we','ArticleDayGoodArticleWeController@index')->name('article.index');
+        //我的收益
+        Route::resource('article/my_profit','MyProfitController');
+
+            Route::any('article/get_revenue_initial_data','MyProfitController@getRevenueInitialData')->name('article.getRevenueInitialData');
+            //收益订单详情
+            Route::any('article/order_detail','MyProfitController@orderDetail')->name('article.orderDetail');
+            Route::any('article/get_order_data','MyProfitController@getOrderData')->name('article.getOrderData');
+        //发布专辑页面路由
+//        Route::any('article/create_ablum','ArticleController@createAblumContent')->name('article.create_ablum');
+//        Route::any('article/create_atlas','ArticleController@createAtlasContent')->name('article.create_atlas');
+
+        //我的发文
+        Route::any('article/my_article','MyArticleController@index')->name('article.my_article');
+
+
+        //文章模板设置
+        Route::any('article_template/index','ArticleTemplateController@index')->name('article_template.index');
+        Route::any('article_template/create','ArticleTemplateController@create')->name('article_template.create');
+
+        //保存图片接口
+        Route::any('article/save_img', 'ArticlePublicController@saveArticleImg')->name('article.save_img');
+
+    });
+    //头条发布文章
+    Route::group(['namespace' => 'ToutiaoArticle'], function () {
+        //发布专辑页面路由
+        Route::any('toutiao/create_ablum','ArticleController@createAblumContent')->name('toutiao.create_ablum');
+        Route::any('toutiao/get_goods_data_view','ArticleController@getGoodsDataView')->name('toutiao.get_goods_data_view');
+        Route::any('toutiao/get_goods_data','ArticleController@getGoodsDataApi')->name('toutiao.get_goods_data');
+
+        Route::any('toutiao/save_img','ArticleController@saveArticleImg')->name('toutiao.save_img');
+
+
+        Route::any('toutiao/save_article','ArticleController@SaveArticle')->name('toutiao.save_article');
+
+        Route::group(['prefix' => 'toutiao/{article}'], function() {
+            Route::any('edit_ablum', 'ArticleController@editAblum')->name('toutiao.edit_ablum');
+        });
+
+    });
+
+    //发文管理
+    Route::group(['namespace' => 'Portal'], function () {
+        //发布图集
+        Route::any('article/add_pics/{article?}','AdminArticleController@index')->name('article.add_pics');
+        //修改图集
+//        Route::any('article/edit_pics/{article?}','AdminArticleController@editPics')->name('article.edit_pics');
+        Route::group(['prefix' => 'article/{article}'], function() {
+            Route::any('edit_pics', 'AdminArticleController@editPics')->name('article.edit_pics');
+        });
+
+        Route::any('article/get_select_goods','AdminArticleController@getSelectGoodsPreData')->name('article.get_select_goods');
+
+        Route::any('article/select_goods_data','AdminArticleController@getSelectGoodsWaitData')->name('article.select_goods_data');
+
+        //预览
+        Route::any('article/preview_article_pics','AdminArticleController@setArticleStatus')->name('article.preview_article_pics');
+        Route::any('article/preview_article_edit_pics','AdminArticleController@setArticleEditStatus')->name('article.preview_article_edit_pics');
+        //存草稿
+        Route::any('article/save_article_pics','AdminArticleController@saveArticlePics')->name('article.save_article_pics');
+        //敏感词
+        Route::any('article/sensitive_word','AdminArticleController@sensitiveWord')->name('article.sensitive_word');
+
+        //换一换标题
+        Route::any('article/get_change_goods_title','AdminArticleController@getChangeGoodsTitle')->name('article.get_change_goods_title');          //换一换主描述
+        Route::any('article/get_change_goods_describe','AdminArticleController@getChangeGoodsDescribe')->name('article.get_change_goods_describe');
+        //换一换副图描述
+        Route::any('article/get_change_goods_subdescribe','AdminArticleController@getChangeGoodsSubDescribe')->name('article.get_change_goods_subdescribe');
+
+        //敏感词内容校验
+        Route::any('article/check_content_sensitiveWord','AdminArticleController@checkContentSensitiveWord')->name('article.check_content_sensitiveWord');
+
+        //清除敏感词
+        Route::any('article/change_sensitiveWord','AdminArticleController@changeSensitiveWord')->name('article.change_sensitiveWord');
+
+        //提交审核
+        Route::any('article/audit_article','AdminArticleController@auditArticle')->name('article.audit_article');
+
+
+    });
+
+    //一些公共数据的接口
+    Route::group(['namespace' => 'Base'], function () {
+        //获取分类的接口
+        Route::any('base/get_categories','BaseApiController@getCategoriesType')->name('base.get_categories');
+        Route::any('base/get_img_data','BaseApiController@getArticleImg')->name('base.get_img_data');
+        Route::any('base/get_des_data','BaseApiController@getArticleDescription')->name('base.getArticleDescription');
+
+    });
+
+    // 商品卡 - 商品分组
+    Route::prefix('goods_group')->namespace('GoodsCard')->group(function () {
+        Route::get('get_goods_group', 'GoodsGroupController@getGoodsGroup')->name('goods_group/get_goods_group');
+        Route::get('get_goods_group_detail', 'GoodsGroupController@getGoodsGroupDetail')->name('goods_group/get_goods_group_detail');
+        Route::get('curd_goods_group', 'GoodsGroupController@curdGoodsGroup')->name('goods_group/curd_goods_group');
+        Route::get('curd_goods_group_detail', 'GoodsGroupController@curdGoodsGroupDetail')->name('goods_group/curd_goods_group_detail');
+        Route::get('find_goods_in_group', 'GoodsGroupController@findGoodsInGroup')->name('goods_group/find_goods_in_group');
+    });
+
+    // 商品卡 - 商品标签
+    Route::prefix('goods_tag')->namespace('GoodsCard')->group(function () {
+        Route::get('get_goods_tags', 'GoodsTagController@getGoodsTags')->name('goods_tag.get_goods_tags');
+        //商品反馈
+        Route::any('add_feed_back', 'GoodsTagController@addFeedBack')->name('goods_tag.add_feed_back');
+
+    });
+
+    // 商品卡 - 店铺搜索
+    Route::prefix('temai_goods_search_config')->namespace('GoodsCard')->group(function () {
+        Route::get('get_shop', 'TemaiGoodsSearchConfigController@getShop')->name('temai_goods_search_config/get_shop');
+    });
+    // 商品卡 - 商品缺失反馈
+    Route::prefix('omission_goods')->namespace('GoodsCard')->group(function () {
+        Route::get('submit_goods', 'OmissionGoodsController@submitGoods')->name('omission_goods/submit_goods');
+    });
+    // 分发结果
+    Route::get('article_distribute_result','Article\ArticleDistributeResultController@index');
+    Route::post('article_distribute_result/delete/{id}','Article\ArticleDistributeResultController@delete')->name('article_distribute_result/delete');
+});

@@ -1,0 +1,213 @@
+<?php
+
+namespace App\Admin\Controllers\Article;
+
+use App\Admin\Models\Article\Article;
+use App\Admin\Models\Article\ArticleAlbums;
+use App\Admin\Models\Article\ArticleCategory;
+use App\Admin\Models\Article\ArticlePics;
+use App\Admin\Repositories\Article\ArticleRepository;
+use App\Admin\Requests\ArticleApiRequest;
+use Encore\Admin\Facades\Admin;
+use Encore\Admin\Layout\Content;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
+/*一些关于文章的公共方法的controller*/
+
+class ArticlePublicController extends Controller
+{
+
+    protected $articleRepository;
+    public function __construct()
+    {
+        parent::__construct();
+    }
+    /**
+     * Index interface.
+     *
+     * @return Content
+     */
+
+    //文章预览页面
+    public function ArticlePreview(Article $article){
+
+        $article_id = $article->id;
+        return Admin::content(function (Content $content) use($article_id) {
+            $content->header('文章预览');
+            $content->description('');
+            $content->body(view('article.preview',compact('article_id')));
+        });
+    }
+
+    public function getArticleData(ArticleApiRequest $request){
+        $article_id = !empty($request['article_id'])?$request['article_id']:null;
+
+        if(!empty($article_id)){
+            $user = config('access.users_table');
+            $article_table = config('article.article_table');
+            $article = Article::leftJoin($user,$user.'.id','=',$article_table.'.user_id')
+                ->where($article_table.'.id',$article_id)
+                ->select([
+                    $article_table.'.title',
+                    $article_table.'.face_image',
+                    $article_table.'.type',
+                    $article_table.'.desc',
+                    $article_table.'.plan_online_time',
+                    $user.'.user_login'
+                ])->first()->toArray();
+            if(!empty($article)){
+                $article_type = $article['type'];
+
+                switch ($article_type){
+                    case 1:
+                        $article['content'] = $this->getPics($article_id);
+                        break;
+                    case 2:
+                        $article['content'] = $this->getAlbums($article_id);
+                        break;
+                    case 6:
+                        $article['content'] = $this->getPics($article_id);
+                        break;
+                    case 7:
+                        $article['content'] = $this->getAlbums($article_id);
+                        break;
+                    default:
+                        $article['content'] = null;
+                        break;
+                }
+                $error = 0;
+                $msg = "";
+            }
+            else{
+                $article = null;
+                $error = -1;
+                $msg = "文章找不到或已删除！";
+            }
+
+        }
+        else{
+            $error = -2;
+            $article = null;
+            $msg = '请上传文章id！';
+        }
+
+        $result['error'] = $error;
+        $result['data'] = $article;
+        $result['msg'] = $msg;
+
+        return json_encode($result);
+    }
+
+    function getPics($article_id){
+        $pics = ArticlePics::where("article_id",$article_id)
+            ->orderBy('order_by','asc')
+            ->orderBy('image_type','asc')
+            ->get()->toArray();
+        $lists = [];
+        if(!empty($pics)) {
+            $tem = []; //临时存放数组
+
+            foreach ($pics as $pic) {
+                if (empty($tem) && $pic['image_type'] == 1) {
+                    $tem = $pic;
+                    continue;
+                }
+                if ($tem['image_type'] == 1 && $pic['image_type'] == 2 && $tem['goods_id'] == $pic['goods_id']) {
+                    $arr['goods_id'] = $pic['product_id'] ?? '';
+                    $goods_id_length = strlen($arr['goods_id']);
+                    if(!empty($arr['goods_id'] && $arr['goods_id'] != "")){
+                        if($goods_id_length>=18){
+                            $arr['goods_link'] = 'https://haohuo.snssdk.com/views/product/item?id='.$arr['goods_id'];
+                        }
+                        else {
+                            $arr['goods_link'] = 'https://item.taobao.com/item.htm?id='.$arr['goods_id'];
+                        }
+                    }
+                    $arr['goods_name'] = $tem['title'];
+                    $arr['main_description'] = $tem['describe'];
+                    $arr['vice_description'] = $pic['describe'];
+                    $arr['main_picture'] = $this->translateImageUrl($tem['image']);
+                    $arr['vice_picture'] = $this->translateImageUrl($pic['image']);
+                    $lists[] = $arr;
+                    unset($tem);
+                    continue;
+                }
+            }
+        }
+        return $lists;
+    }
+
+    function getAlbums($article_id){
+        $lists = [];
+        $albums = ArticleAlbums::where("article_id", $article_id)->orderBy('order_by','asc')->get();
+
+        foreach($albums as $album){
+            $content['content_id'] = $album->id;
+            $content['detail_type'] = $album->detail_type;
+            $content['product_id'] = $album->product_id;
+            $content['title'] = $album->title;
+            $content['goods_url'] = $album->goods_url;
+            if(empty($content['goods_url']) || $content['goods_url'] == ""){
+                $goods_id_length = strlen($content['product_id']);
+                if(!empty($content['product_id'] && $content['product_id'] != "")){
+                    if($goods_id_length>=18){
+                        $arr['goods_link'] = 'https://haohuo.snssdk.com/views/product/item?id='.$content['product_id'];
+                    }
+                    else {
+                        $arr['goods_link'] = 'https://item.taobao.com/item.htm?id='.$content['product_id'];
+                    }
+                }
+            }
+            $content['image'] = $this->translateImageUrl($album->image ?? '');
+            $content['describe'] = $album->describe;
+            $content['shop_name'] = $album->shop_name;
+            $content['price'] = $album->price;
+            $content['order_by'] = $album->order_by;
+
+            $lists[] = $content;
+        }
+        return $lists;
+    }
+
+    private function translateImageUrl($img)
+    {
+        if(empty($img))
+            return $img;
+
+        if(strstr($img,'Uploads') && strstr($img,'http') == false){
+            return 'http://platform.youdnr.com'.$img;
+        }
+
+        return $img;
+    }
+
+
+    public function saveArticleImg(ArticleApiRequest $request){
+        $img = !empty($request['img'])?$request['img']:null;
+
+        if(!empty($img)){
+            $user = Admin::user()->user_login;
+            $file = 'TemaiArticle';
+            $rank_name = base64_encode($user);
+            $rank_name = str_replace('/','-',$rank_name);
+            $result_data = $this->saveImg($img,$file,$rank_name);
+            $msg = $result_data['msg'];
+            $error = $result_data['status'];
+            $url_top = env('APP_URL', 'http://kolplatform.youdnr.com');
+            $url = $url_top.'/'.$result_data['url'];
+        }
+        else{
+            $msg = '图片不能为空';
+            $error ='-4';
+            $url = "";
+        }
+
+        $result['msg'] = $msg;
+        $result['error'] = $error;
+        $result['url'] = $url;
+
+        return json_encode($result);
+    }
+}

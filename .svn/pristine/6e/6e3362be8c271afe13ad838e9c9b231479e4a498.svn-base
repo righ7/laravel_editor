@@ -1,0 +1,355 @@
+<?php
+
+namespace App\Admin\Controllers\Article;
+
+use App\Admin\Models\Article\Article;
+use App\Admin\Models\Article\ArticleAlbums;
+use App\Admin\Models\Article\ArticleCategory;
+use App\Admin\Repositories\Article\ArticleRepository;
+use App\Admin\Requests\ArticleApiRequest;
+use Encore\Admin\Facades\Admin;
+use Encore\Admin\Layout\Content;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+class ArticleController extends Controller
+{
+
+    protected $articleRepository;
+    public function __construct(ArticleRepository $articleRepository)
+    {
+        $this->articleRepository = $articleRepository;
+        parent::__construct();
+    }
+    /**
+     * Index interface.
+     *
+     * @return Content
+     */
+
+    //创建专辑的文章页面
+    public function createAblumContent()
+    {
+        return Admin::content(function (Content $content) {
+
+            $content->header('敏感词管理');
+            $content->description('敏感词列表');
+
+            $content->body(view('article.Ablum.publish_ablum'));
+        });
+    }
+
+    public function createAtlasContent()
+    {
+        return Admin::content(function (Content $content) {
+
+            $content->header('敏感词管理');
+            $content->description('敏感词列表');
+
+            $content->body(view('article.Atlas.publish_atlas'));
+        });
+//        return view('article.Atlas.publish_atlas');
+    }
+
+    public function getGoodsDataApi(ArticleApiRequest $request){
+
+        $url = !empty($request['url'])?$request['url']:null;
+        if(!empty($url)){
+            $url_arr = $this->getUrlKeyValue($url);
+
+            if(!empty($url_arr['id'])){
+                $taobao_id = $url_arr['id'];
+                $taobao_data = file_get_contents('http://baseinfo.youdnr.com/api/get_goods_base_detail?NumIids='.$taobao_id);
+                $taobao_data = json_decode($taobao_data,true);
+
+                if(!empty($taobao_data['data'])){
+                    $data = $taobao_data['data'];
+                    $status= 0;
+                    $msg = '';
+                }
+                else{
+                    $data = [];
+                    $status= 3;
+                    $msg = '该商品已下架或不存在!';
+                }
+
+            }
+            else{
+                $data = [];
+                $status= 2;
+                $msg = '该链接无效，请输入正确的淘宝/天猫的商品链接!';
+            }
+        }
+        else{
+            $data = [];
+            $status= 1;
+            $msg = '请输入url进行查询!';
+        }
+        $result['data'] = $data;
+        $result['status'] = $status;
+        $result['msg'] = $msg;
+        return response()->json($result);
+    }
+
+    function getUrlKeyValue($url)
+    {
+        $result = array();
+        $mr     = preg_match_all('/(\?|&)(.+?)=([^&?]*)/i', $url, $matchs);
+        if ($mr !== false) {
+            for ($i = 0; $i < $mr; $i++) {
+                $result[$matchs[2][$i]] = $matchs[3][$i];
+            }
+        }
+        return $result;
+    }
+
+
+    public function SaveArticle(ArticleApiRequest $request){
+        $data = !empty($request['data'])?$request['data']:null;
+        $data = json_decode($data,true);
+        $user = Admin::user();
+
+        if(!empty($data)) {
+            if (Admin::user()->can('write_global_fashion')) {
+                $article['title'] = $data['title'];
+                $article['desc'] = $data['leads'];
+                $article['cover_type'] = $data['coverType'];
+                $article['type'] = 2;
+                //处理上传的封面图的json
+                $cover = $data['cover'];
+                $img_cover_return = $this->articleImg($cover);
+                //判断图片返回的格式是否是数组（非数组的是图片保存失败）
+                if(is_array($img_cover_return) !==true){
+                    $status = -1;
+                    $msg = $img_cover_return;
+                    $data = [];
+
+                    return $this->GetApiJson($msg,$status,$data);
+                }
+                $article['face_image'] = json_encode($img_cover_return);
+                //保存补充封面图
+                $supplement_face_image_data =  $this->saveImg($data['supCover']);
+
+                if($supplement_face_image_data['status'] == 0){
+                    $article['supplement_face_image'] = $supplement_face_image_data['url'];
+                }
+                else{
+                    $status = -1;
+                    $msg = '补充封面图'.$supplement_face_image_data['msg'];
+                    $data = [];
+
+                    return $this->GetApiJson($msg,$status,$data);
+
+                }
+
+                $article['target_population_category'] = $data['people'];
+                $article['article_belong_category'] = json_encode($data['articleClass']);
+                $article['status'] = $data['saveType'];   //文章保存状态   0存草稿    10:待审核   20：审核不通过    30：审核通过（待分发）  40（分发成功）
+                $article['article_number'] = 0;
+                $article['article_type'] = 1;
+                $article['platform'] = 3;
+                $article['updated_at'] = date('Y-m-d H:i:s');
+                $content = $data['content'];
+                $detail_content = [];
+                if(!empty($content)){
+                    $detail_content = $this->saveContent($content);
+                    if(!empty($detail_content)){
+                        if(is_array($detail_content) === false){
+
+                            $status = -1;
+                            $msg = $detail_content;
+                            $data = [];
+                            return $this->GetApiJson($msg,$status,$data);
+                        }
+                    }
+                }
+                if( $article['status'] > 0 && empty($detail_content)){
+
+                    $status = -2;
+                    $msg = '发布文章时内容不能为空！';
+                    $data = [];
+                    return $this->GetApiJson($msg,$status,$data);
+                }
+
+                if(!empty($data['id'])){
+                    $article_model = Article::where('id',$data['id'])->first();
+                    $update_result = $this->articleRepository->update($article_model,$article);
+                    if($update_result === true){
+                        $article_id = $data['id'];
+                        $user_id = $article_model->user_id;
+                    }
+                    else{
+                        $article_id = 0;
+                        $user_id = 0;
+                    }
+                }
+                else{
+                    $article['user_id'] = $user->id;
+
+                    $article['created_at'] = date('Y-m-d H:i:s');
+                    $article_id = Article::insertGetId($article);
+                    $user_id = $user->id;
+                }
+
+                if($article_id>0){
+                    if(!empty($detail_content)){
+
+                        $article_albums = ArticleAlbums::where('article_id',$article_id)->select(['id','article_id','order_by'])->get();
+
+                        foreach ($detail_content as $kkk=>$vvv){
+                            $vvv['article_id'] = $article_id;
+                            $vvv['user_id'] = $user_id;
+                            $vvv['order_by'] = $kkk+1;
+                            $vvv['updated_at'] = date('Y-m-d H:i:s');
+
+                            $albums = $article_albums->where('order_by',$vvv['order_by'])->first();
+                            if(!empty($albums)){
+                                $detail_id = $albums->id;
+                                ArticleAlbums::where('article_id',$article_id)->where('id',$detail_id)->update($vvv);
+                            }
+                            else{
+                                $vvv['created_at'] = date('Y-m-d H:i:s');
+                                ArticleAlbums::insertGetId($vvv);
+                            }
+                        }
+                        ArticleAlbums::where('article_id',$article_id)->where('order_by','>',count($detail_content))->delete();
+                    }
+                }
+                $status = 0;
+                $msg = '成功！';
+                $data = [];
+                return $this->GetApiJson($msg,$status,$data);
+            }
+            else{
+                $status = -3;
+                $msg = '无发文的权限，请同联系添加发文权限！';
+                $data = [];
+                return $this->GetApiJson($msg,$status,$data);
+            }
+        }
+        else{
+            $status = -4;
+            $msg = '发文内容不能为空';
+            $data = [];
+            return $this->GetApiJson($msg,$status,$data);
+        }
+    }
+
+    function saveContent($content){
+        $detail_content = [];
+        if(!empty($content)){
+            foreach ($content as $k=>$v){
+                $detail['detail_type'] = $v['type'];
+                $detail['goods_id'] = 0;
+                $img = $v['img'];
+                if(!empty($img)){
+                    $img_data = $this->saveImg($img);
+                    if($img_data['status'] == 0){
+                        $img = $img_data['url'];
+                    }
+                    else{
+                        $kk = $k+1;
+                        return '第'.$kk.'模块中的图片'.$img_data['msg'];
+                    }
+                }
+                $detail['image'] = $img;
+                $detail['describe'] = $v['describe'];
+                $detail['goods_url'] = $v['link'];
+                $detail['title'] = $v['goods_name'];
+                $detail['shop_name'] = $v['shop_name'];
+                $detail['price'] = $v['price'];
+
+                $detail_content[] = $detail;
+            }
+        }
+        if(!empty($detail_content)){
+            return $detail_content;
+        }
+        else{
+            return [];
+        }
+    }
+
+    function articleImg($cover){
+        $new_cover = [];
+        if(!empty($cover)){
+            foreach ($cover as $k=>$v){
+                $img_url = $this->saveImg($v);
+                if($img_url['status'] === 0){
+                    $new_cover[] = $img_url['url'];
+                }
+                else{
+                    $kk = $k+1;
+                    return  '封面第'.$kk.'张图片'.$img_url['msg'];
+                }
+            }
+        }
+        else{
+            return  '封面图不能为空';
+        }
+
+        if(!empty($new_cover)){
+            return $new_cover;
+        }
+        else{
+            return '封面图不能为空';
+        }
+    }
+
+    function saveImg($base64_image_content){
+        $msg = "";
+        if (preg_match('/^(data:\s*image\/(\w+);base64,)/', $base64_image_content, $result)){
+            $type = $result[2];
+
+            $path = "upload/images/article/".date('Ymd',time());
+
+            $check_result = $this->createFolders($path);
+
+            if($check_result == true){
+                $img_name = date('Ymdhis',time()).time().rand(1,999).".{$type}";
+                $img_file = base64_decode(str_replace($result[1], '', $base64_image_content));
+
+
+                if (file_put_contents($_SERVER["DOCUMENT_ROOT"].'/'.$path.'/'.$img_name,$img_file)){
+                    $url =$path.$img_name;
+                    $status = 0;
+                    $msg="保存成功！";
+                }else{
+                    $url ="";
+                    $msg="保存失败！";
+                    $status = -1;
+                }
+            }
+            else{
+                $url ="";
+                $msg="创建文件夹失败！";
+                $status = -2;
+            }
+        }
+        else{
+            $url ="";
+            $msg="无法解析！";
+            $status = -3;
+        }
+
+        $return_result['url'] = $url;
+        $return_result['status'] = $status;
+        $return_result['msg'] = $msg;
+
+
+        return $return_result;
+    }
+
+    public  function createFolders($path)
+    {
+        // 递归创建
+        if (!file_exists($path)) {
+
+            $this->createFolders(dirname($path));
+            if (!mkdir($path, 0777)) {
+                return '建立存放上传文件目录失败';
+            }
+        }
+        return true;
+    }
+}

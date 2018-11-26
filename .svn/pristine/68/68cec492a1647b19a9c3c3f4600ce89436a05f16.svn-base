@@ -1,0 +1,104 @@
+<?php
+
+namespace App\Admin\Controllers\Article;
+
+use App\Admin\Models\Article\DayArticleApi;
+use App\Admin\Models\BaseInfo\ArticleAll;
+use App\Admin\Repositories\Base\ArticleAllRepository;
+use Illuminate\Http\Request;
+use Encore\Admin\Form;
+use Encore\Admin\Grid;
+use Encore\Admin\Widgets\Table;
+use Encore\Admin\Widgets\Tab;
+use Encore\Admin\Layout\Row;
+use Encore\Admin\Facades\Admin;
+use Encore\Admin\Layout\Column;
+use Encore\Admin\Layout\Content;
+use App\Http\Controllers\Controller;
+use Encore\Admin\Controllers\ModelForm;
+use Illuminate\Support\Facades\DB;
+
+class ArticleTemaiGoodArticleController extends Controller
+{
+    //use ModelForm;
+
+    /**
+     * Index interface.
+     *
+     * @return Content
+     */
+    protected $ArticleAllRepository;
+    public function __construct(ArticleAllRepository $ArticleAllRepository)
+    {
+        parent::__construct();
+        $this->ArticleAllRepository = $ArticleAllRepository;
+    }
+
+    public function index()
+    {
+        Admin::disablePjax();
+        return Admin::content(function (Content $content) {
+            $content->header('特卖好文');
+            $content->description(' ');
+            $content->body(view('article.TemaiArticle.temai_goods_article'));
+        });
+    }
+
+    public function articleData(Request $request){
+        $code = 0;
+        $errMsg = '';
+        $data = [];
+        $order_by='go_detail_count';
+        $input = json_decode($request->searchArr, true);
+        $title            = $input['title'] ?? '';
+//        $author_id        = $input['author_id'] ?? '';
+        $product_id       = $input['product_id'] ?? '';
+        $plate            = $input['plate'] ?? '';
+        $onlinetime_start = $request->online_time[0] ?? '';
+        $onlinetime_end   = $request->online_time[1] ?? '';
+        $read       = $input['read'] ?? '';
+        $comments       = $input['comments'] ?? '';
+        $order_type       = $input['order_type'] ?? '';
+
+        $limit            = $request->page_count ?? 10;
+
+        $where = [];
+
+        if ($title) {
+            array_push($where, ['title', 'like', "%{$title}%"]);
+        }
+
+        if ($plate) {
+            array_push($where, ['source', '=', $plate]);
+        }
+
+        if($onlinetime_start){
+            array_push($where, ['behot_time', '>=', $onlinetime_start]);
+        }
+
+        if($onlinetime_end){
+            array_push($where, ['behot_time', '<', date('Y-m-d',strtotime($onlinetime_end .'+1 day'))]);
+        }
+        if ($product_id){
+            array_push($where, ['product_id', '=', $product_id]);
+        }
+        if ($read){
+            array_push($where, ['go_detail_count', '>', $read]);
+        }
+        if ($comments){
+            array_push($where, ['comments_count', '>', $comments]);
+        }
+        if ($order_type==2){
+            $order_by='comments_count';
+        }
+
+        $sql= ArticleAll::where($where)->orderBy( $order_by,'desc')->paginate($limit);
+        $data = $sql;
+        return response()->json([
+            'code'   => $code,
+            'errMsg' => $errMsg,
+            'data'   => $data,
+        ]);
+    }
+
+}

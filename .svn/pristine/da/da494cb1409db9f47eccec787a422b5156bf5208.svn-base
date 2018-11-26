@@ -1,0 +1,41 @@
+<div class="content-box">
+	<div class="content-box-left">
+		<div class="form-group titleBox">
+			<input type="text" class="form-control" id="titleInp"  class="titleInp" placeholder="请输入4～19个汉字的标题，结尾不能为句号或叹号">
+			<span class="title_tip">0/19</span>
+		</div>
+		<div class="leadsBox">
+			<textarea class="form-control leads" rows="3" placeholder="请输入10～100个汉字的导语"></textarea>
+			<span class="leads_tip">0/100</span>
+		</div>
+
+		<div class="addBtnBox">
+			<button type="button" class="btn btn-primary addIntBtn">添加段落导语</button>
+			<button type="button" class="btn btn-primary addImgBtn">添加图片</button>
+			<button type="button" class="btn btn-primary addBabyBtn">添加宝贝</button>
+			<label class="checkbox-inline isLocationLabe">
+				<input type="checkbox" id="isLocation" value=""> 是否定位模块
+			</label>
+		</div>
+		<div id="sortable"></div>
+
+		<div class="saveBtnBox">
+			{{ csrf_field()}}
+			<button type="button" class="btn btn-primary publishBtn">发布</button>
+			<button type="button" class="btn btn-default previewBtn">预览</button>
+			<button type="button" class="btn btn-default draftBtn">存草稿</button>
+		</div>
+	</div>
+</div>
+
+
+<script data-exec-on-popstate>
+    $(function () {
+        $( "#sortable" ).sortable();
+        $( "#sortable" ).disableSelection();
+
+
+
+    });
+</script>
+

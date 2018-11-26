@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Admin\Models\Article;
+
+use Illuminate\Database\Eloquent\Model;
+
+class ArticleAlbums extends Model
+{
+    //
+    protected $fillable = ['title', 'article_number', 'cover_type', 'face_image', 'supplement_face_image', 'type', 'belong_field', 'category', 'target_population_category',
+        'article_belong_category', 'desc', 'display_url', 'reading_count', 'comments_count', 'plan_online_time', 'publish_time', 'source', 'english_label', 'chinese_label',
+        'article_type', 'collection_time', 'is_hot', 'status','reject_reason'];
+
+    public function __construct(array $attributes = [])
+    {
+        $connection = config('admin.database.connection') ?: config('database.default');
+
+        $this->setConnection($connection);
+
+        $this->setTable(config('article.article_albums'));
+
+        parent::__construct($attributes);
+    }
+
+}

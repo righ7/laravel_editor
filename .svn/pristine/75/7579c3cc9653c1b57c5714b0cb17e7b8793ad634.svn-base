@@ -1,0 +1,198 @@
+<?php
+
+namespace App\Admin\Controllers\Article;
+
+use App\Admin\Models\Article\DayArticleApiWe;
+use Encore\Admin\Form;
+use Encore\Admin\Grid;
+use Encore\Admin\Widgets\Table;
+use Encore\Admin\Widgets\Tab;
+use Encore\Admin\Layout\Row;
+use Encore\Admin\Facades\Admin;
+use Encore\Admin\Layout\Column;
+use Encore\Admin\Layout\Content;
+use App\Http\Controllers\Controller;
+use Encore\Admin\Controllers\ModelForm;
+
+class ArticleDayGoodArticleWeController extends Controller
+{
+    use ModelForm;
+
+    /**
+     * Index interface.
+     *
+     * @return Content
+     */
+
+    public function index()
+    {
+        return Admin::content(function (Content $content) {
+
+            $content->header('自有好文');
+            $content->description(' ');
+            //$tab = new Grid();
+//            $headers = ['Id', 'Email', 'Name', 'Company'];
+//            $rows = [
+//                [1, 'labore21@yahoo.com', 'Ms. Clotilde Gibson', 'Goodwin-Watsica'],
+//                [2, 'omnis.in@hotmail.com', 'Allie Kuhic', 'Murphy, Koepp and Morar'],
+//                [3, 'quia65@hotmail.com', 'Prof. Drew Heller', 'Kihn LLC'],
+//                [4, 'xet@yahoo.com', 'William Koss', 'Becker-Raynor'],
+//                [5, 'ipsa.aut@gmail.com', 'Ms. Antonietta Kozey Jr.'],
+//            ];
+
+            //$table = new Table($headers, $rows);
+            //$tab->add('Pie', $pie);
+            //$table1=$this->grid();
+            //$tab->add('全网',$tab);
+            //$tab->add('自有', 'blablablabla....');
+
+            //echo $tab->render();
+            //$content->body($tab->render());
+            //$content->row($tab->render());
+
+            //echo $box;
+            $content->row(function (Row $row) {
+                //$row->append('<a href="#">全网</a>');
+                $row->column(0.1, function (Column $column) {
+                    $column->append('<a href="/admin/article/day_good_article" style="background-color: #00ca6d;color: white;border-radius: 4px;padding: 3px 6px;width: 100px;margin-bottom: 5px">全网好文</a>');
+                });
+
+                $row->column(0.1, function (Column $column) {
+                    $column->append('<a href="/admin/article/day_good_article_we" style="background-color: orangered;color: white;border-radius: 4px;padding: 3px 6px;width: 100px;margin-bottom: 5px">自有好文</a>');
+                });
+//
+//                $row->column(4, function (Column $column) {
+//                    $column->append(Dashboard::dependencies());
+//                });
+            });
+            $content->row(' ');
+            $content->body($this->grid());
+        });
+    }
+
+    /**
+     * Edit interface.
+     *
+     * @param $id
+     * @return Content
+     */
+    public function edit($id)
+    {
+        return Admin::content(function (Content $content) use ($id) {
+
+            $content->header('敏感词管理');
+            $content->description('创建敏感词');
+
+            $content->body($this->form()->edit($id));
+        });
+    }
+    public function getTab($content){
+
+        $tab = new Tab();
+        //$headers = ['标题', '类型', '来源', '频道'];
+//        $data=DayArticleApi::paginate();
+//        $rows = [
+//            [1, $data->total, 'Ms. Clotilde Gibson', 'Goodwin-Watsica'],
+//            [2, 'omnis.in@hotmail.com', 'Allie Kuhic', 'Murphy, Koepp and Morar'],
+//            [3, 'quia65@hotmail.com', 'Prof. Drew Heller', 'Kihn LLC'],
+//            [4, 'xet@yahoo.com', 'William Koss', 'Becker-Raynor'],
+//            [5, 'ipsa.aut@gmail.com', 'Ms. Antonietta Kozey Jr.'],
+//        ];
+
+        //$table = new Table($headers, ));
+        $tab->add('全网好文','');
+        $tab->add('自有好文','');
+
+        return $tab->render();
+
+    }
+    /**
+     * Create interface.
+     *
+     * @return Content
+     */
+    public function create()
+    {
+        return Admin::content(function (Content $content) {
+
+            $content->header('敏感词管理');
+            $content->description('修改敏感词');
+
+            $content->body($this->form());
+        });
+    }
+
+    /**
+     * Make a grid builder.
+     *
+     * @return Grid
+     */
+    protected function grid()
+    {
+
+        return Admin::grid(DayArticleApiWe::class, function (Grid $grid) {
+
+            //$grid->id('序号')->sortable();
+            $grid->title('标题')->display(function ($name) {
+                return "<a href='$this->display_url' target='_blank'>$name</a>";
+            });
+            $grid->type('类型')->display(function ($released) {
+                return $released=='1' ? '专辑' : '图集';
+            });
+            //$grid->coming_from('来源');
+            $grid->source('频道');
+            $grid->go_detail_count('阅读数');
+            //$grid->comments_count('评论数');
+            $grid->behot_time('文章发布时间');
+            $grid->d('#');
+            $grid->d('#');
+            $grid->expandFilter();
+            $grid->disableRowSelector();
+            $grid->disableActions();
+            $grid->disableCreateButton();
+//            $grid->filter(function($filter){
+//
+//                $filter->column(1/2, function ($filter) {
+//                    $filter->where(function ($query) {
+//                        if ($this->input == 1) {
+//                            $query->whereIn('type', [1]);
+//                        } elseif ($this->input == 2) {
+//                            $query->whereIn('type', [2]);
+//                        } else {
+//                            $query->whereIn('type', [1, 2]);
+//                        }
+//                    },'')->select([
+//                        '0' => '全网',
+//                        '1' => '自有',
+//                        '2' => '内容',
+//                    ]);
+//                });
+
+                // 去掉默认的id过滤器
+                //$filter->disableIdFilter();
+
+
+//            });
+
+        });
+    }
+
+    /**
+     * Make a form builder.
+     *
+     * @return Form
+     */
+    protected function form()
+    {
+        return Admin::form(DayArticleApiWe::class, function (Form $form) {
+
+            $form->hidden('id', 'ID');
+
+            $form->text('keywords', '关键词');
+            $form->select('type','文章类型')->options([1 => '标题', 2 => '内容']);
+            $form->hidden('keywords_type', '关键词类别')->value(0);
+            $form->hidden('created_at', '创建时间');
+            $form->hidden('updated_at', '更新时间');
+        });
+    }
+}

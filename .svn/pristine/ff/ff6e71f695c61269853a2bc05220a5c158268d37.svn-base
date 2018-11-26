@@ -1,0 +1,645 @@
+<style >
+
+
+</style>
+<div id="app" class="content-box">
+
+    <div >
+        <form  name="edit_article_form"  method="post"  id="edit_article_form">
+            <div id="titleVue"  style="min-height:0px;padding-bottom: 5px;">
+                    <div class="col-xs-12 col-sm-6 col-md-6 col-lg-6 sortable-grid ui-sortable">
+                        <div >
+                            <input type="text" class="form-control" name="article_title"
+                                   id="article_title" v-model="title"
+                                   placeholder="请输入8～30个字符的标题，结尾不能为句号或叹号" maxlength="100"
+                                   style="padding-left:0px;"/>
+
+                            <span class="title_tip"></span>
+                        </div>
+                        <label :style="{ color: styleColor }" style="margin-left: 5px;margin-top: 5px">@{{ hint }}</label><br/>
+                        <label :style="{ color: repetiveColor }" style="margin-left: 5px;">@{{ repetitionHint }}</label>
+                        {{--<label :style="{ color: repetiveColor }" class="title-tip"></label>--}}
+                    </div>
+                    <label>
+                        <a class="btn btn-primary title-check" @click="checkTitleRepetiveRate">
+                            <font style="color:white;">检测标题重复率</font>
+                        </a>
+                    </label>
+                    <label >
+                        <a class="btn btn-primary" @click="addGoodsmodal = true">
+                            <font style="color:white;">请先添加宝贝＊ </font>
+                        </a>
+                    </label>
+
+            </div>
+            <br/>
+            <div  class="addBtnBox" style="height: 600px;overflow-y: auto;margin-top: 40px">
+                {{--<div class="row" id="acticle_pos_div"></div>--}}
+                {{--<div class="row"></div>--}}
+                {{--<div class=""></div>--}}
+                {{--<div >--}}
+                    {{----}}
+                {{--</div>--}}
+                <draggable  v-model="items" @start="drag=true" @end="drag=false">
+                    <Card  v-for="(item,index) in items" :key="index" style="width:350px;display: inline-block;margin-left: 15px;margin-top: 15px">
+                        <a slot="title" @click="editSelectGoodsData(item.goods_id,index)" >
+                            <Icon type=""></Icon>
+                            修改<i class="fa fa-wrench"></i>
+                        </a>
+                        <a href="#" slot="extra" @click="deleteGoodsPics(index)">
+                            <Icon type="ios-loop-strong"></Icon>
+                            ×
+                        </a>
+                        <div >
+                            <div style="width: 100%;height: 200px;">
+                                <div style="float: left;width: 65%">
+                                    <img :src="item.goodsDatas.main_pic" style="width: 100%;height: 100%;"/>
+                                </div>
+                                <div style="float: left;width:35%;;padding-left: 10px">
+                                    <img :src="item.goodsDatas.sub_pic" style="width: 90%;height: 60%;"/>
+
+                                </div>
+                                <div style="float: left;width:35%;padding-left: 10px">
+                                    <div style="height:80px;text-overflow: ellipsis;overflow: hidden;margin: auto">
+                                             <span style="font-size: 12px;" >
+                                                @{{ item.goodsDatas.sub_describe  }}
+                                            </span>
+                                    </div>
+
+                                </div>
+                            </div>
+                            <div style="width: 100%;height: 10px;margin-top: 10px">
+                                    <span >
+                                          <a :href="item.goods_url" target="_blank">
+                                                @{{ item.goodsDatas.title_recommend }}
+                                            </a>
+                                    </span>
+
+                                <span style="color: red">
+                                        ￥@{{ item.price }}
+                                    </span>
+                            </div>
+                            <br/>
+                            <div style="width: 100%;height: 50px;margin-top: 10px">
+                                    <span>
+                                        @{{ item.goodsDatas.main_describe }}
+                                    </span>
+                            </div>
+                            <br/>
+                            <div style="width: 100%;height: 20px;">
+                                <a :href="item.goods_url" target="_blank">
+                                    @{{ item.shop_name }}
+                                </a>
+
+                                <span>
+                                         佣金：@{{ item.commission_rate*100 }}%
+                                    </span>
+                                <span>
+                                         销量：@{{ item.sell_num }}
+                                    </span>
+                            </div>
+
+                        </div>
+                    </Card>
+                </draggable>
+
+
+
+
+
+
+            </div>
+            <div class="addBtnBox">
+                <a class="btn btn-primary"href="#" @click="saveArticlePics">
+                    <font style="color:white;"><i class="fa fa-tag"></i> 存草稿</font>                                     </a>
+
+                <a class="btn btn-primary"href="#" >
+                    <font style="color:white;"><i class="fa fa-legal "></i>提交审核</font>
+                </a>
+
+                <a class="btn btn-primary" :href="previewUrl" @click="showPreview"  target="_blank" >
+                    <font style="color:white;">
+                        <i class="fa fa-print"></i>
+                        预览
+                    </font>
+                </a>
+
+                <a class="btn btn-primary"href="#" >
+                    <font style="color:white;"><i class="fa fa-clock-o"></i>定时发布</font>
+                </a>
+
+                <a class="ivu-btn ivu-btn-warning" href="#" style="margin-left: 200px">
+                    <font style="color:white;"><i class="fa fa-wrench"></i>修改全部</font>
+                </a>
+            </div>
+
+            {{--<div style="position: absolute; bottom: 10px;display: none" class="col-sm-12">--}}
+                {{--<div class="form-group titleBox">--}}
+                    {{--<div style="margin:0 auto;float:left;">--}}
+                        {{--<a class="btn btn-primary"href="#" @click="saveArticlePics">--}}
+                            {{--<font style="color:white;"><i class="fa fa-tag"></i> 存草稿</font>                                         </a>--}}
+                        {{--&nbsp;&nbsp;--}}
+                        {{--<a class="btn btn-primary"href="#" >--}}
+                            {{--<font style="color:white;">--}}
+                                {{--<i class="fa fa-legal "></i>--}}
+                                {{--提交审核--}}
+                            {{--</font>--}}
+                        {{--</a>--}}
+                        {{--&nbsp;&nbsp;--}}
+                        {{--<a class="btn btn-primary"href="#" >--}}
+                            {{--<font style="color:white;">--}}
+                                {{--<i class="fa fa-clock-o"></i>--}}
+                                {{--定时发布--}}
+                            {{--</font>--}}
+                        {{--</a>--}}
+
+                        {{--&nbsp;&nbsp;--}}
+                        {{--<a class="btn btn-primary" :href="previewUrl" @click="showPreview"  target="_blank" >--}}
+                            {{--<font style="color:white;">--}}
+                                {{--<i class="fa fa-print"></i>--}}
+                                {{--预览--}}
+                            {{--</font>--}}
+                        {{--</a>--}}
+
+                        {{--&nbsp;&nbsp;--}}
+                        {{--<a class="ivu-btn ivu-btn-warning" href="#" style="margin-left: 200px">--}}
+                            {{--<font style="color:white;">--}}
+                                {{--<i class="fa fa-wrench"></i>--}}
+                                {{--修改全部--}}
+                            {{--</font>--}}
+                        {{--</a>--}}
+                    {{--</div>--}}
+                {{--</div>--}}
+            {{--</div>--}}
+        </form>
+    </div>
+
+
+    <modal
+            title="添加宝贝"
+            v-model="addGoodsmodal"
+            ok-text="提交"
+    @on-ok="addGoods"
+    class-name="vertical-center-modal">
+    <i-input type="textarea" v-model="goodsLink" placeholder="请输入商品链接" clearable style="margin: 20px 0 20px 10px;width: 490px;"></i-input>
+    </modal>
+
+    <div id="modalVue">
+        <Modal v-model="modal" title="编辑商品" width="70%"  :mask-closable="false" footer-hide="true">
+            <div v-for="(goodsDatas,index) in goodsDatas" :key="index" class="modal-body" id="modal_select_pics_info" style="padding:0 0; height: 100%;" >
+                <table class="table table-bordered table-striped emo-style" style="width:100%;margin-bottom:2px;">
+                    <tr >
+                        <td style="min-width:160px;max-width:165px;margin-bottom:2px;">
+                            <div  class="fl" style="height: 18px;">
+                                <label class="fl">标题:</label>
+                                <label style="color: green;"></label>
+                            </div>
+                            <div style="clear:both;"></div>
+                            <div class="fl" style="width:70%;">
+                                <!--<label style="height:110px;">-->
+                                <label >
+                                    <textarea  v-model="goodsDatas.title_recommend" rows="4" cols="60"   class="form-control pics_title"  maxlength="20"  placeholder="请输入6～20个汉字的标题" style="padding:0px 3px;"  >             </textarea>
+                                </label>
+                            </div>
+                        </td>
+                        <td v-for="goodsImage in goodsDatas.images" style="position:relative;min-width:153px;max-width:156px;">
+                            <img :src="goodsImage" style="width:100px;overflow: hidden;"/>
+                            <a @click="setMainPic(goodsImage,index)" class="btn btn-default btn-xs" style="position: absolute;right:20px;bottom: 90px">设主</a>
+                            <a @click="setSubPic(goodsImage,index)" class="btn btn-default btn-xs" style="position: absolute;right:20px;bottom: 40px">设副</a>
+                        </td>
+                    </tr>
+
+                </table>
+                <table  class="table table-bordered table-striped emo-style" style="width:100%;margin-bottom:2px;">
+                    <tr>
+                        <td class="col-sm-4">
+                            {{--<img :src="main_pic[index]" style="width:160px;" />--}}
+                            <img :src="goodsDatas.main_pic" style="width:160px;" />
+                        </td>
+                        <td class="col-sm-4">
+                            <textarea v-model="goodsDatas.main_describe"  rows="6" cols="60" maxlength="255"  placeholder="请输入主图描述">
+                                {{--@{{ goodsDatas.main_describe }}--}}
+                            </textarea>
+                        </td>
+                        <td class="col-sm-4">
+                            {{--<img :src="sub_pic[index]" style="width:160px;" /> --}}
+                            <img :src="goodsDatas.sub_pic" style="width:160px;" />
+                        </td>
+                        <td class="col-sm-4">
+                            <textarea v-model="goodsDatas.sub_describe" rows="6" cols="60" maxlength="255"  placeholder="请输入主图描述">
+                                {{--@{{ goodsDatas.sub_describe }}--}}
+                            </textarea>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div style="padding-top: 20px">
+                <input type="button" class="btn btn-primary" @click="saveGoodsData" value="保存"/>
+            </div>
+        </Modal>
+    </div>
+
+</div>
+
+{{--拖拽插件--}}
+<script src="{{ asset('lib/Sortable.min.js') }}"></script>
+<script src="{{ asset('lib/vuedraggable.min.js') }}"></script>
+<script data-exec-on-popstate>
+    //拖拽
+    Vue.component('draggable');
+   let vm;
+   $(function () {
+
+       vm = new Vue({
+           el:'#app',
+           data(){
+               return{
+                   title: '', // 标题
+                   goodsLink:'',//产品链接
+                   addGoodsmodal:false,
+                   modal:false,
+                   items: [],//产品信息
+                   goodsImages: [],//产品图集
+                   goodsDatas:[],//产品数据
+                   waitTitle:'',//产品推荐标题
+                   main_pic:[],//主图
+                   sub_pic:[],//副图
+                   goods_id:'',//产品id
+                   type:'',//类型：add 为添加、edit为编辑
+                   index:'',//产品卡下标
+                   title_recommend:'',
+                   previewUrl:'preview_article_pics',//预览
+                   titleStatus:false,//检测标题重复率
+                   data:[],
+                   repetitionHint:'',
+                   repetiveColor:'green',
+                   hint: '', // 敏感词、中文、特殊符号提示语句
+                   styleColor: 'red', // 上一条语句样式
+                   sensitiveWord: [], // 敏感词数组
+               }
+
+           },
+           mounted() {
+//               this.checkTitle(this.title);
+               this.$Message.config({top: 200,duration: 3});
+           },
+           methods: {
+
+               loading() {
+                   const msg = this.$Message.loading('正在加载中...', 0);
+                   setTimeout(msg, 3000);
+               },
+               //获取goods_id
+            addGoods() {
+                vm.type='add';
+                axios.get("get_select_goods", {
+                    params: {
+                        link:vm.goodsLink
+                    }
+                })
+                    .then(function (response) {
+                        //console.log(response.data);
+
+                        //alert(data[0]);
+                        console.log(response.data)
+                        console.log(vm.items)
+                        //alert(vm.items.length)
+                        //ids='';
+                        ids=response.data;
+                        alert(ids);
+                        //调用编辑
+                        vm.getSelectGoodsData(ids);
+                        //data=[response.data];
+                        vm.goods_id=response.data;
+
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+            },
+               //生成编辑页
+           getSelectGoodsData(goods_id){
+
+                   vm.modal = true;
+                   //清空旧数据
+                   vm.goodsDatas=[];
+                   //加载。。。
+                   vm.loading ();
+                       axios.get('select_goods_data', {
+                       params: {
+                           select_product_id: goods_id,
+                       }
+                   }).then(function (response) {
+
+                       //循环存储新数据
+                       for(var i=0;i<response.data.DATA.length;i++){
+                           arr=response.data.DATA[i];
+                           if(response.data.waitTitle!=''){
+                               arr.title_recommend=response.data.waitTitle[response.data.DATA[i].product_id].title;
+                           }else{
+                               arr.title_recommend='';
+                           }
+                           //主图、副图默认赋值
+//                           vm.main_pic[i]=response.data.DATA[i].images[0];
+//                           vm.sub_pic[i]=response.data.DATA[i].images[1];
+                           arr.main_pic=response.data.DATA[i].images[0];
+                           arr.sub_pic=response.data.DATA[i].images[1];
+                           //存储数据
+                           vm.goodsDatas.push(arr);
+                       }
+                       //推荐title
+                       vm.waitTitle=response.data.waitTitle;
+                      // console.log(vm.goodsDatas);
+                   }).catch(e => {
+                       vm.$Message.error('服务器开了点小差，请稍后再试！')
+                   });
+           },
+               //设置主图
+          setMainPic(url,index){
+//                vm.main_pic[index]=url;
+                vm.goodsDatas[index].main_pic=url;
+                console.log(vm.main_pic)
+          },
+               //设置副图
+          setSubPic(url,index){
+//              vm.sub_pic[index]=url;
+              vm.goodsDatas[index].sub_pic=url;
+          },
+               //保存产品卡
+          saveGoodsData(type){
+              data=vm.goods_id.split(',');
+              //alert(data);
+              //加载。。。
+              loading();
+              axios.get('http://baseinfo.youdnr.com/api/goods/get_goods_data_v2', {
+                    params: {
+                        goods_id_arr: data,
+                    }
+                }).then(function (response) {
+
+                      //alert(123);
+                      //alert(vm.goodsDatas.length);
+
+                      if(vm.type=='add'){
+                          for(var i=0;i<response.data.data.length;i++){
+
+                              arr=response.data.data[i];
+//                              arr.main_pic=vm.main_pic[i];
+//                              arr.sub_pic=vm.sub_pic[i];
+                              arr.goodsDatas=vm.goodsDatas[i];
+                              vm.items.push(arr);
+                          }
+                          //缓存产品卡数据
+                          localStorage.setItem('selectPicsGoodsData',JSON.stringify(vm.items));
+                          //缓存文章标题
+                          localStorage.setItem('articleTitle',JSON.stringify(vm.title));
+                      }else{
+                          //alert('vm.index:'+vm.index);
+                          console.log(vm.goodsDatas);
+                          arr=response.data.data[0];
+                          arr.goodsDatas=vm.goodsDatas[0];
+//                          arr.main_pic=vm.main_pic;
+//                          arr.sub_pic=vm.sub_pic;
+                          vm.items[vm.index]=arr;
+                          //console.log(arr);
+                          //更新产品卡数据
+                          arrs=JSON.parse(localStorage.getItem('selectPicsGoodsData'));
+                          arrs[vm.index]=arr;
+                          //缓存产品卡数据
+                          localStorage.setItem('selectPicsGoodsData',JSON.stringify(arrs));
+                          //缓存文章标题
+                          localStorage.setItem('articleTitle',JSON.stringify(vm.title));
+                      }
+
+                  vm.modal=false;
+                  vm.$Message.success('保存成功！');
+
+                }).catch(e => {
+                      vm.$Message.error('服务器开了点小差，请稍后再试！')
+                });
+
+
+          },
+               //编辑产品卡
+           editSelectGoodsData(goods_id,index){
+              vm.type='edit';
+              vm.index=index;
+              vm.goods_id=goods_id;
+              vm.modal = true;
+              //产品数据
+              vm.goodsDatas=[vm.items[index].goodsDatas];
+              //主图、副图
+//              vm.sub_pic=[vm.items[index].sub_pic];
+//              vm.main_pic=[vm.items[index].main_pic];
+           },
+           //预览
+          showPreview(){
+               //更新标题
+              //缓存产品卡数据
+              localStorage.setItem('selectPicsGoodsData',JSON.stringify(vm.items));
+              localStorage.setItem('articleTitle',JSON.stringify(vm.title));
+              vm.previewUrl='preview_article_pics';
+          },
+          //删除产品卡
+          deleteGoodsPics(index){
+              this.items.splice(index, 1);
+              //缓存产品卡数据
+              localStorage.setItem('selectPicsGoodsData',JSON.stringify(vm.items));
+              //缓存文章标题
+              localStorage.setItem('articleTitle',JSON.stringify(vm.title));
+          },
+          //存草稿
+          saveArticlePics(){
+              if(vm.items==''){
+                  vm.$Message.error('请先添加宝贝！');
+              }else if(this.checkTitle(vm.title)==false){
+                  vm.$Message.error(this.hint);
+              }else if(vm.title.length > 30){
+                  vm.$Message.error('标题内容过长！');
+              }else if(vm.titleStatus==false){
+                  vm.$Message.error('标题未检测！');
+              }else if(vm.titleRepetive >= 80){
+                  vm.$Message.error('标题重复率检测未通过！');
+              }else{
+                  axios.post('save_article_pics', {
+                      params: {
+                          goodsArr: vm.items,
+                          articleTitle:vm.title
+                      }
+                  }).then(function (response) {
+                      vm.$Message.success('保存成功！');
+                      //清除本地缓存
+                      location.reload();
+                      localStorage.removeItem('selectPicsGoodsData');
+                      localStorage.removeItem('articleTitle');
+                  }).catch(e => {
+                      vm.$Message.error('服务器开了点小差，请稍后再试！')
+                  });
+
+              }
+
+           },
+           // 标题重复率检测
+           checkTitleRepetiveRate() {
+               var that = vm;
+               that.url="https://www.toutiao.com/search_content/?offset=0&format=json&autoload=true&count=20&cur_tab=1&from=search_tab&keyword="+that.title;
+               $.ajax({
+                   url: that.url,
+                   type: 'GET',
+                   dataType: 'JSONP',
+                   success: function (res) {
+                       that.data=res.data;
+
+                       if(res.data.length > 0){
+                           var reg = /[\u4e00-\u9fa5]/g;
+                           var title = that.title.match(reg).join('').split("");
+                           var rtitleArr = []; // 存放 data 里提取出来的标题
+                           var rTitle = 0;   // 重复率最高的标题
+                           var repetitiveRate = 0; // 重复率
+                           var num = 0;
+                           var rate = 0;
+                           that.data.map(item => {
+                               if(item.title != undefined){
+                                   rtitleArr.push(item.title);
+                               }
+                           });
+                           rtitleArr.map(i => {
+                               title.map(j => {
+                                   if(i.indexOf(j) != -1){
+                                       num++;
+                                   }
+                               });
+                               rate = Math.round(num / title.length * 100);
+                               if(repetitiveRate < rate){
+                                   repetitiveRate = rate;
+                                   rTitle = i;
+                               }
+                               num = 0;
+                           });
+                           if(repetitiveRate >= 80){
+                               that.repetitionHint = `搜索到标题：${rTitle}；重复率：${repetitiveRate}%`;
+                               that.repetiveColor = 'red';
+                           }else{
+//                       that.repetitionHint = `重复率：${repetitiveRate}%`;
+                               that.repetitionHint = `标题检测通过`;
+                               that.repetiveColor = 'green';
+                           }
+
+                           that.titleStatus = true;
+                           that.titleRepetive = repetitiveRate;
+                       }
+
+                   }
+                });
+
+
+
+
+           },
+           //敏感词
+           getSensitiveWordTitle() {
+               var that = this;
+               axios.get("sensitive_word",{
+                   params: {
+                       type: 1,
+                   }
+               }) .then(response => {
+                       that.sensitiveWord = response.data;
+                   })
+           },
+           //标题正则检测
+           checkTitle(n){
+               this.title = n.trim();
+
+               this.titleHref = 'https://www.toutiao.com/search/?keyword=' + this.title;
+
+               if(this.title.length > 0){
+
+                   // 英文 ' 转为 中文 ‘
+                   if(this.title.indexOf(`'`) != -1){
+                       this.title = this.title.replace(`'`,`‘`);
+                   }
+
+                   // 检测是否有 8 个中文
+                   reg = /[\u4e00-\u9fa5]/g;
+                   var ChineseLength = this.title.match(reg).join('').length;
+                   if(ChineseLength < 8){
+                       this.hint = `至少需要 8 个中文`;
+                       this.styleColor = 'red';
+                       return false;
+                   }
+
+                   // 检测是否是叠字
+                   var sign = true;
+                   var str = '';
+                   var titleArr = this.title.split('');
+                   for(var i = 0; i < titleArr.length; i++){
+                       if(i === 0) str = titleArr[i];
+                       if(str !== titleArr[i]){
+                           sign = false;
+                           break;
+                       }
+                       str = titleArr[i];
+                   }
+                   if(sign === true){
+                       this.hint = `检测到标题都是叠字`;
+                       this.styleColor = 'red';
+                       return false;
+                   }
+
+                   // 检测末尾是否特殊符号
+                   var regEn = /[`~!@#$%^&*()_+<>?:"{},.\/;'[\]]/im;
+                   var regCn = /[·！#￥（——）：；“”‘、，|《。》？、【】[\]]/im;
+                   if(regEn.test(this.title.charAt(this.title.length - 1)) || regCn.test(this.title.charAt(this.title.length - 1))){
+                       this.hint = `检测到标题末尾有特殊字符`;
+                       this.styleColor = 'red';
+                       return false;
+                   }
+
+                   // 敏感词检测
+
+                   console.log(this.sensitiveWord);
+                   if(this.sensitiveWord.length === 0){
+                       this.getSensitiveWordTitle();
+                   }
+                   for(var i = 0; i< this.sensitiveWord.length; i++){
+                       if(this.title.indexOf(this.sensitiveWord[i]) != -1){
+                           this.hint = `检测到标题含有敏感词『 ${this.sensitiveWord[i]} 』`;
+                           this.styleColor = 'red';
+                           return false;
+                       }
+                   }
+                    if(n.length > 30 ){
+                        this.hint = `检测到标题字数超过30个字`;
+                        this.styleColor = 'red';
+                        return false;
+                    }else{
+                        this.hint = `还可以输入 ${30 - n.length} 字`;
+                        this.styleColor = 'green';
+                    }
+
+               }else{
+                   this.hint = `请输入标题`;
+                   this.styleColor = 'red';
+               }
+               console.log(this.hint);
+               console.log(this.styleColor);
+           },
+
+         },
+           watch: {
+               title: function (n, o) {
+                   //标题内容修改，重新检测重复率
+                   vm.titleStatus = false;
+                   vm.repetitionHint='';
+                   this.checkTitle(n);
+               }
+           }
+
+       });
+
+
+   });
+
+
+</script>

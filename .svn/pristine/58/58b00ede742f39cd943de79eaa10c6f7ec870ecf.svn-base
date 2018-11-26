@@ -1,0 +1,81 @@
+<?php
+
+namespace App\Admin\Extensions\Actions;
+
+use Encore\Admin\Admin;
+
+class PlatformArticleDistributeAction
+{
+    protected $row;
+
+    public function __construct($row)
+    {
+        $this->row = $row;
+    }
+
+    protected function script()
+    {
+        $token = csrf_token();
+        $delRoute = route('article_distribute_result/delete',['id' => '']).'/';
+        return <<<SCRIPT
+        // 删除数据
+        $('.del').on('click', function () {
+            let id = $(this).data('id');
+            swal({
+                title: "确认驳回成草稿?",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "确认",
+                showLoaderOnConfirm: true,
+                cancelButtonText: "取消",
+                preConfirm: function() {
+                    return new Promise(function(resolve) {
+                        $.ajax({
+                            method: 'post',
+                            url: '$delRoute' + id,
+                            data: {
+                                _method:'post',
+                                _token:'$token'
+                            },
+                            success: function (data) {
+                                $.pjax.reload('#pjax-container');
+                                resolve(data);
+                            }
+                        });
+                    });
+                }
+            }).then(function(result) {
+                var data = result.value;
+                if (typeof data === 'object') {
+                    if (data.status) {
+                        swal(data.message, '', 'success');
+                    } else {
+                        swal(data.message, '', 'error');
+                    }
+                }
+            });
+        });
+SCRIPT;
+    }
+
+    protected function render()
+    {
+        Admin::script($this->script());
+
+        // 所有页面均有预览
+
+        $html = "<a style='margin-left: 2px;' class='btn btn-xs btn-primary'>预览</a>";
+
+        if($this->row->status == 2 || ($this->row->status ==0 && $this->row->is_get == 0)){
+            $html .= "<a data-id='{$this->row->id}' style='margin-left: 2px;' class='btn btn-xs btn-warning del'>驳回</a>";
+        }
+
+        return $html;
+    }
+
+    public function __toString()
+    {
+        return $this->render();
+    }
+}

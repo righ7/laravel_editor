@@ -1,0 +1,249 @@
+
+<style>
+    .demo-badge-alone{
+        background: #5cb85c !important;
+    }
+    .demo-spin-col{
+        height: 100px;
+        position: relative;
+        border: 1px solid #eee;
+    }
+    .demo-spin-icon-load{
+        animation: ani-demo-spin 1s linear infinite;
+    }
+    @keyframes ani-demo-spin {
+        from { transform: rotate(0deg);}
+        50%  { transform: rotate(180deg);}
+        to   { transform: rotate(360deg);}
+    }
+    .rank_first{
+        width:60px;
+        height: 60px;
+        margin:6px 0;
+    }
+    .rank{
+        width:50px;
+        height: 50px;
+        margin:6px 0;
+    }
+    a{
+        color:#2d8cf0;
+    }
+    a:hover{
+        color:#42A5F5;
+        background: none;
+    }
+</style>
+<div id="app">
+    <div style="margin-left: 35px">
+        <Tooltip content="返回">
+            <i-button @click="back">
+                <Icon type="ios-undo" size="19"/>
+            </i-button>
+        </Tooltip>
+        <i-select v-model="date_swicth" @on-change="changeDateSwitch" style="width:200px">
+            <i-option v-for="item in dateList" :value="item.value" :key="item.value">@{{ item.label }}</i-option>
+        </i-select>
+    </div>
+    <Row type="flex" justify="center" align="middle">
+        <i-col span="23" style="margin-top: 20px">
+            <i-table :height="tableHight" :data="tableData" :columns="tableColumns" stripe></i-table>
+        </i-col>
+    </Row>
+    <Row type="flex" justify="center" align="middle">
+        <i-col style="margin-top: 20px">
+            <Page
+                    :total="amount"
+                    :current="pageIndex"
+                    size="small"
+                    :page-size="pageCount"
+                    show-total
+                    show-elevator
+                    @on-change="pageChange"
+            ></Page>
+        </i-col>
+    </Row>
+    <back-top></back-top>
+</div>
+
+<script>
+
+    let vm = new Vue({
+        el: '#app',
+        data() {
+            return {
+                tableColumns: [
+                    {
+                        title: '排名',
+                        width: 130,
+                        // type: 'index',
+                        align: 'center',
+                        render (h,param){
+                            let index=(param.index+1)+(vm.pageCount*(vm.pageIndex-1)),img,class_mark;
+                            if (index<4){
+                                if (index==1){
+                                    img="{{ asset('images/rank_01.png') }}";
+                                    class_mark="rank_first";
+                                } else if (index==2){
+                                    img="{{ asset('images/rank_02.png') }}"
+                                    class_mark="rank";
+                                } else{
+                                    img="{{ asset('images/rank_03.png') }}"
+                                    class_mark="rank";
+                                }
+                                return h('img',{
+                                    attrs: {
+                                        src:img,
+                                        class:class_mark
+                                    },
+                                });
+                            } else {
+                                return h('span',{
+                                    attrs: {
+                                        href:""
+                                    }
+                                },index);
+                            }
+
+                        }
+                    },
+                    {
+                        title: '作者id',
+                        key: 'create_user_id',
+                        width: 130,
+                    },
+                    {
+                        title: '阅读数',
+                        key: 'detail_sum',
+                        width: 130,
+                    },
+                    {
+                        title: '操作',
+                        width: 180,
+                        render (h,param){
+                            return h('a',{
+                                attrs: {
+                                    href:"javascript:void(0)"
+                                },
+                                on: {
+                                    click: function(){
+                                        window.location.href="/admin/temai_article/temai_good_article?user="+param.row.create_user_id;
+                                    }
+                                }
+                            },'查看该作者的文章');
+                        }
+                    },
+                ],
+                dateList: [
+                    {
+                        value: 1,
+                        label: '日排行'
+                    },
+                    {
+                        value: 7,
+                        label: '周排行'
+                    },
+                    {
+                        value: 30,
+                        label: '月排行'
+                    },
+                ],
+                date_swicth:7,
+                tableData: [],
+                pageSize: 100,
+                pageCount: 50,
+                pageIndex: 1,
+                amount: 0,
+                tableHight: 600,
+            }
+        },
+        methods: {
+            getArticleIssueData() {
+                axios.get("{{ route('temai_article.author_data') }}", {
+                    params: {
+                        page: 1,
+                        page_count: vm.pageCount,
+                        date_swicth:vm.date_swicth,
+                    }
+                })
+                    .then(function (response) {
+                        vm.tableData = response.data.data.data;
+                        vm.amount = response.data.data.total;
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+            },
+            //屏幕自适应
+            screenAuto(){
+                var Hproportion=window.screen.availHeight/900;
+                vm.tableHight=vm.tableHight*Hproportion;
+            },
+            search() {
+                this.handleSpinCustom();
+                axios.get("{{ route('temai_article.author_data') }}", {
+                    params: {
+                        page: 1,
+                        page_count: vm.pageCount,
+                        date_swicth:vm.date_swicth,
+                    }
+                })
+                    .then(function (response) {
+                        vm.tableData = response.data.data.data;
+                        vm.amount = response.data.data.total;
+                        vm.$Spin.hide();
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+            },
+            pageChange(index) {
+                window.scrollTo(0,0); // 触发回到顶部，再加载数据
+                vm.pageIndex=index;
+                this.handleSpinCustom();
+                axios.get("{{ route('temai_article.author_data') }}", {
+                    params: {
+                        page: vm.pageIndex,
+                        page_count: vm.pageCount,
+                        date_swicth:vm.date_swicth,
+                    }
+                })
+                    .then(function (response) {
+                        vm.tableData = response.data.data.data;
+                        vm.amount = response.data.data.total;
+                        vm.$Spin.hide();
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+            },
+            handleSpinCustom () {
+                this.$Spin.show({
+                    render: (h) => {
+                        return h('div', [
+                            h('Icon', {
+                                'class': 'demo-spin-icon-load',
+                                props: {
+                                    type: 'ios-loading',
+                                    size: 18
+                                }
+                            }),
+                            h('div', 'Loading')
+                        ])
+                    }
+                });
+            },
+            changeDateSwitch(){
+                this.search()
+            },
+            back(){
+                window.location.href="{{ '/admin/temai_article/temai_good_article' }}";
+            },
+            dateValueFormat(f,v){
+                this.searchArr.online_time = f;
+            }
+        }
+    });
+    vm.screenAuto();
+    vm.getArticleIssueData();
+</script>

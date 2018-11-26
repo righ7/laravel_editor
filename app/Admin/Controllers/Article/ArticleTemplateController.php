@@ -1,0 +1,267 @@
+<?php
+
+namespace App\Admin\Controllers\Article;
+
+use App\Admin\Models\Article\ArticleTemplate;
+
+use App\Admin\Models\Article\ArticleTemplateSign;
+use App\Admin\Models\BaseInfo\ArticleAll;
+use App\Admin\Repositories\Base\ArticleAllRepository;
+use App\Admin\Requests\ArticleApiRequest;
+use Encore\Admin\Facades\Admin;
+use Encore\Admin\Form;
+use Encore\Admin\Grid;
+use Encore\Admin\Layout\Content;
+use App\Http\Controllers\Controller;
+
+/*文章模板管理*/
+
+class ArticleTemplateController extends Controller
+{
+
+    public function __construct()
+    {
+
+        parent::__construct();
+    }
+    /**
+     * Index interface.
+     *
+     * @return Content
+     */
+
+     public function index(){
+
+         return Admin::content(function (Content $content){
+             $content->header('文章模板');
+             $content->description('');
+             $content->body($this->grid());
+         });
+     }
+
+    protected function grid()
+    {
+        Admin::disablePjax();
+        Admin::script($this->script());
+        return Admin::grid(ArticleTemplate::class, function (Grid $grid) {
+            $grid->disableExport();
+
+            $grid->id('序号')->sortable();
+            $grid->template_name('模板名称');
+            $grid->platform('平台')->display(function ($released) {
+                switch ($released){
+                    case 1:
+                        return '<laber class="laber laber-warning">头条</laber>';
+                        break;
+                    case 2:
+                        return '<laber class="laber laber-info">特卖</laber>';
+                        break;
+                    default:
+                        return '<laber class="laber laber-success">头条/特卖</laber>';
+                }
+            });
+            $grid->template('模板内容')->display(function ($template){
+                    $html = "<button style='margin-left: 2px;' data-id='{$this->id}' data-content='{$template}' class='btn btn-xs btn-link showTemplate'>查看模板内容</button>";
+                    return $html;
+            });
+            $states = [
+                'on'  => ['value' => 1, 'text' => '打开', 'color' => 'warning'],
+                'off' => ['value' => 0, 'text' => '关闭', 'color' => 'default'],
+            ];
+
+            $grid->status('状态')->switch($states);
+            $grid->actions(function ($actions) {
+
+                $actions->disableView();
+            });
+
+            $grid->filter(function($filter){
+
+                // 去掉默认的id过滤器
+                $filter->disableIdFilter();
+
+                // 在这里添加字段过滤器
+                $filter->like('template_name', 'name');
+            });
+            $grid->filter(function($filter){
+
+                // 在这里添加字段过滤器
+                $filter->column(1/2, function ($filter) {
+                    $filter->like('template_name', '模板名称');
+                });
+
+                $filter->column(1/2, function ($filter) {
+                    $filter->where(function ($query) {
+                        if ($this->input == 1) {
+                            $query->whereIn('platform', [0,1]);
+                        } elseif ($this->input == 2) {
+                            $query->whereIn('platform', [0,2]);
+                        } else {
+                            $query->whereIn('platform', [0, 1, 2]);
+                        }
+                    }, '平台')->select([
+                        0 => '全部',
+                        1 => '头条',
+                        2 => '特卖',
+                    ]);
+                });
+
+                // 去掉默认的id过滤器
+                $filter->disableIdFilter();
+
+
+            });
+        });
+    }
+
+    protected function script()
+    {
+        return <<<SCRIPT
+        // 模板展示页面弹框
+        $('.showTemplate').click(function () {
+            let id = $(this).data('id');
+            let template = $(this).data('content');
+            let template_list = template.split(',');
+            var html = "";
+            if(template_list.length>0){
+                $.each(template_list,function(i,item){
+                    if(item == 'p1_m1' || item == 'p1_m2' || item=='p2_m1' || item=='p2_m2' ){
+                        if(item.indexOf('p1') !== -1 ){
+                            var P = '1';
+                        }
+                        else{
+                            var P = '2';
+                        }
+                        
+                        if(item.indexOf('m1') !== -1 ){
+                            var m = '一';
+                        }
+                        else{
+                            var m = '二';
+                        }
+                        html += '<p>产品'+P+'的第'+m+'段描述</p><br>';
+                    }
+                    else{
+                        var img;
+                        if(item == 'p1_car'){
+                            img='p1';
+                        }
+                        else if(item == 'p2_car'){
+                            img='p2';
+                        }
+                        else{
+                            img=item.replace('_', '-');
+                        }
+                        html += '<div style="width: 100%;text-align: center"><img src="/images/'+img+'.png" style="height: 120px"/></div>';
+                    }
+                });
+            }
+            layer.open({
+            type: 1,
+            shade: true,
+            title: false, //不显示标题
+            shadeClose: true, //开启遮罩关闭
+            area: ['380px', '80%'],
+            content: html,
+            cancel: function(index){
+                layer.close(index);
+            }
+        });
+        }); 
+SCRIPT;
+    }
+
+    public function update($id,ArticleApiRequest $request){
+
+
+        $status = $request->input('status');
+
+        if($status == 'on'){
+            $status = 1;
+        }
+        else{
+            $status = 0;
+        }
+        ArticleTemplate::where('id',$id)->update(['status'=>$status]);
+
+        return response()->json([
+            'status'  => true,
+            'message' => trans('修改成功'),
+        ]);
+
+    }
+
+    public function create()
+    {
+        Admin::disablePjax();
+
+        return Admin::content(function (Content $content) {
+
+            $content->header('文章模板管理');
+            $content->description('创建模板');
+
+            $content->body(view('article_template.create_template'));
+        });
+    }
+
+    public function edit(ArticleTemplate $articleTemplate)
+    {
+        Admin::disablePjax();
+        $template = $articleTemplate->template;
+        $template = explode(',',$template);
+        $articleTemplate->template = $template;
+        $data = $articleTemplate;
+        return Admin::content(function (Content $content) use($data) {
+
+            $content->header('文章模板管理');
+            $content->description('创建模板');
+
+            $content->body(view('article_template.create_template',compact('data')));
+        });
+    }
+
+    public function store(ArticleApiRequest $request){
+        $template_id = !empty($request['template_id'])?$request['template_id']:null;
+        $template_name = !empty($request['template_name'])?$request['template_name']:null;
+        $platform = !empty($request['platform'])?$request['platform']:0;
+        $template = !empty($request['template'])?$request['template']:null;
+
+        $arr['template_name'] = $template_name;
+        $arr['platform'] = $platform;
+        $arr['template'] = $template;
+        $arr['updated_at'] = date('Y-m-d H:i:s');
+        if(!empty($template_id)){
+            ArticleTemplate::where('id',$template_id)->update($arr);
+            $msg = '更新成功';
+        }
+        else{
+            $arr['status'] = 1;
+            $arr['created_at'] = date('Y-m-d H:i:s');
+            ArticleTemplate::insert($arr);
+            $msg = '创建成功';
+        }
+
+        $result['error'] = 0;
+        $result['msg'] = $msg;
+        return json_encode($result);
+    }
+    public function destroy($id)
+    {
+        $ids = explode(',', $id);
+
+        if (ArticleTemplate::destroy(array_filter($ids))) {
+            return response()->json([
+                'status'  => true,
+                'message' => trans('admin.delete_succeeded'),
+            ]);
+        }
+        else
+        {
+            return response()->json([
+                'status'  => false,
+                'message' => trans('admin.delete_failed'),
+            ]);
+        }
+    }
+
+}

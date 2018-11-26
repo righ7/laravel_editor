@@ -1,0 +1,30 @@
+<?php
+
+use Illuminate\Routing\Router;
+
+
+Admin::registerAuthRoutes();
+
+Route::group([
+    'prefix'        => config('admin.route.prefix'),
+    'namespace'     => config('admin.route.namespace'),
+    'middleware'    => config('admin.route.middleware'),
+], function (Router $router) {
+
+    $router->get('/', 'HomeController@index')->name('admin');
+
+    //文章
+    Route::group(['namespace' => 'Article'], function () {
+        //敏感词列表
+        Route::resource('article/sensitive_word_list','ArticleSensitiveWordController');
+        //全网好文
+        Route::resource('article/day_good_article','ArticleDayGoodArticleController');
+
+        Route::any('article/day_good_article_we','ArticleDayGoodArticleWeController@index')->name('article.index');
+
+        //发布专辑页面路由
+        Route::any('article/create_ablum','ArticleController@createAblumContent')->name('article.create_ablum');
+        Route::any('article/create_atlas','ArticleController@createAtlasContent')->name('article.create_atlas');
+
+    });
+});

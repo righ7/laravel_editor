@@ -1,0 +1,21 @@
+<?php
+
+namespace App\Admin\Controllers\GoodsCard;
+
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use Encore\Admin\Facades\Admin;
+use Illuminate\Support\Facades\DB;
+
+class GoodsTagController extends Controller
+{
+    /**
+     * 获取标签
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getGoodsTags(){
+        $res=Admin::user()->can('goods_setting');
+        return response()->json($res);
+    }
+}

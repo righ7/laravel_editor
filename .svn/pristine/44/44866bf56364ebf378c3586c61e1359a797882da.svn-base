@@ -1,0 +1,35 @@
+<?php
+
+use Illuminate\Routing\Router;
+
+
+Admin::registerAuthRoutes();
+
+Route::group([
+    'prefix'        => config('admin.route.prefix'),
+    'namespace'     => config('admin.route.namespace'),
+    'middleware'    => config('admin.route.middleware'),
+], function (Router $router) {
+
+    $router->get('/', 'HomeController@index')->name('admin');
+
+
+    Route::group(['namespace' => 'Article'], function () {
+        //敏感词列表
+        Route::resource('article/sensitive_word_list','ArticleSensitiveWordController');
+        //全网好文
+        Route::resource('article/day_good_article','ArticleDayGoodArticleController');
+        //自有好文
+        Route::resource('article/day_good_article_we','ArticleDayGoodArticleWeController');
+        //全球时尚写作页面
+        Route::any('article/create_content','ArticleController@createContent')->name('article.create_content');
+        Route::any('article/save_article','ArticleController@SaveArticle')->name('article.save_article');
+
+        //获取商品信息的弹出框页面
+        Route::any('article/get_goods_data_view','ArticleController@getGoodsDataView')->name('article.get_goods_data_view');
+        //api方法
+        Route::any('article/get_article_type','ArticleController@getArticleTypeApi')->name('article.get_article_type');
+        //获取商品信息API
+        Route::any('article/get_goods_data','ArticleController@getGoodsDataApi')->name('article.get_goods_data');
+    });
+});

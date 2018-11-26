@@ -1,0 +1,2055 @@
+$('.addCover label').click(function () {
+    var type=$(this).text().trim();
+    if(type=='单图'){
+        $('.addCover .oneImgBox').show();
+        $('.addCover .threeImgBox').hide();
+    }
+    else{
+        $('.addCover .threeImgBox').show();
+        $('.addCover .oneImgBox').hide();
+    }
+})
+
+
+$('.addCover .oneImgBox').click(function () {
+    $('.dialogCover').show();
+})
+$('.supCover .oneImgBox').click(function () {
+    $('.dialogCoverSup').show();
+})
+    // 定义一些使用的变量
+    var     jcrop_api,//jcrop对象
+        boundx,//图片实际显示宽度
+        boundy,//图片实际显示高度
+        realWidth,// 真实图片宽度
+        realHeight, //真实图片高度
+
+        // 使用的jquery对象
+        $target = $('#target'),
+        $preview = $('#preview-pane'),
+        $pcnt = $('#preview-pane .preview-container'),
+        $pimg = $('#preview-pane .preview-container img'),
+
+        $tarsup = $('#tarsup'),
+
+        xsize = $pcnt.width(),
+        ysize = $pcnt.height();
+    console.log(xsize)
+    $('.dialogCover .selImgBtn').click(function(){
+        openBrowse()
+    })
+    $('.dialogCover .sureImgBtn').click(function(){
+        // uploadFile()
+        var data=document.getElementById("myCan").toDataURL("image/jpeg");
+        $('.addCover .oneImgBox img').attr('src',data);
+        $('.dialogCover').css({'display':'none'});
+        $('.addCover .oneImgBox .ImgBox').css({'display':'none'});
+    })
+    $('#file').change(function(){
+        changeFile()
+    })
+    $('.dialogCover .closeImgBtn').click(function(){
+        $('.dialogCover').css({'display':'none'});
+        if($('.addCover .oneImgBox .ImgBox').css('display')=='none'){
+            $('.addCover .oneImgBox .ImgBox').css({'display':'none'});
+        }
+
+    })
+    //1、打开浏览器 onClick="openBrowse()" onchange="changeFile()" onClick="uploadFile()"
+    function openBrowse(){
+        var ie=navigator.appName=="Microsoft Internet Explorer" ? true : false;
+        if(ie){
+            document.getElementById("file").click();
+        }else{
+            var a=document.createEvent("MouseEvents");
+            a.initEvent("click", true, true);
+            document.getElementById("file").dispatchEvent(a);
+        }
+    }
+
+    //2、从 file 域获取 本地图片 url
+    function getFileUrl(sourceId) {
+        var url;
+        if (navigator.userAgent.indexOf("MSIE")>=1) { // IE
+            url = document.getElementById(sourceId).value;
+        } else if(navigator.userAgent.indexOf("Firefox")>0) { // Firefox
+            url = window.URL.createObjectURL(document.getElementById(sourceId).files.item(0));
+        } else if(navigator.userAgent.indexOf("Chrome")>0) { // Chrome
+            url = window.URL.createObjectURL(document.getElementById(sourceId).files.item(0));
+        } else if(navigator.userAgent.indexOf("Safari")>0) { // Chrome
+            url = window.URL.createObjectURL(document.getElementById(sourceId).files.item(0));
+        }
+        return url;
+    }
+    //选择文件事件
+    function changeFile() {
+        var url = getFileUrl("file");//根据id获取文件路径
+        preImg(url);
+        return false;
+    }
+
+    //3、将本地图片 显示到浏览器上
+    function preImg(url) {
+
+        console.log('url===' + url);
+        //图片裁剪逻辑
+        if(jcrop_api)//判断jcrop_api是否被初始化过
+        {
+            jcrop_api.destroy();
+        }
+
+        //初始化预览div内容
+        initPreview();
+        var p = document.getElementById('Preview');
+        p.src = url;
+
+        //初始化图片
+        initTarget();
+        var image = document.getElementById('target');
+        image.onload=function(){//图片加载是一个异步的过程
+            //获取图片文件真实宽度和大小
+            var img = new Image();
+            img.onload=function(){
+                realWidth = img.width;
+                realHeight = img.height;
+
+                if(realWidth<750||realHeight<422){
+                    $target.hide();
+                    layer.msg('请选择尺寸不小于750*422px的图片')
+                    return;
+                }
+                else{
+                    //获取图片真实高度之后
+                    initJcrop();//初始化Jcrop插件
+                    initCanvas();//初始化Canvas内容
+                }
+
+            };
+            img.src = url;
+        };
+        image.src = url;
+    }
+
+    //初始化Jcrop插件
+    function initJcrop(){
+
+        console.log('init',[xsize,ysize]);
+        $target.removeAttr("style");//清空上一次初始化设置的样式
+        $target.Jcrop({
+            onChange: updatePreview,
+            onSelect: updatePreview,
+            minSize:[750,422],
+            aspectRatio: 750 / 422
+        },function(){
+            //初始化后回调函数
+            // 获取图片实际显示的大小
+            var bounds = this.getBounds();
+            boundx = bounds[0];//图片实际显示宽度
+            boundy = bounds[1];//图片实际显示高度
+
+            // 保存jcrop_api变量
+            jcrop_api = this;
+
+        });
+    }
+
+
+    //更新显示预览内容
+    function updatePreview(c){
+        if (parseInt(c.w) > 0)
+        {
+            var rx = xsize / c.w;
+            var ry = ysize / c.h;
+
+            $pimg.css({
+                maxWidth:  Math.round(rx * boundx) + 'px',
+                maxHeight: Math.round(ry * boundy) + 'px',
+                width: Math.round(rx * boundx) + 'px',
+                height: Math.round(ry * boundy) + 'px',
+                marginLeft: '-' + Math.round(rx * c.x) + 'px',
+                marginTop: '-' + Math.round(ry * c.y) + 'px'
+            });
+
+            //更新canvas画板内容
+            var img=document.getElementById("target");
+            var ct=document.getElementById("myCan");
+            var ctx=ct.getContext("2d");
+            //清空画板
+            ctx.clearRect(0,0, ct.width, ct.height);
+            //.drawImage(图像对象,原图像截取的起始X坐标,原图像截取的起始Y坐标,原图像截取的宽度,原图像截取的高度，绘制图像的起始X坐标,绘制图像的起始Y坐标,绘制图像所需要的宽度,绘制图像所需要的高度);
+            ctx.drawImage(img, c.x/boundx * realWidth,c.y/boundy * realHeight, c.w/boundx * realWidth, c.h/boundy * realHeight,0,0, ct.width, ct.height);
+        }
+    }
+
+    //初始化预览div内容
+    function initTarget(){
+        $target.removeAttr("style");//清空上一次初始化设置的样式
+        $target.css({
+            maxWidth:  '100%',
+            maxHeight: '100%'
+        });
+    }
+    //初始化预览div内容
+    function initPreview(){
+        $pimg.removeAttr("style");//清空上一次初始化设置的样式
+        $pimg.css({
+            maxWidth:  xsize + 'px',
+            maxHeight: ysize + 'px'
+        });
+    }
+
+    //初始化canvas画板内容
+    function initCanvas(){
+        //更新canvas画板内容
+        var img= document.getElementById("target");
+        var ct= document.getElementById("myCan");
+        var ctx = ct.getContext("2d");
+
+        var myCanWidth = $('#myCan').width();
+        var myCanHeight = $('#myCan').height();
+
+        //清空画板
+        ctx.clearRect(0,0, ct.width, ct.height);
+
+        //.drawImage(图像对象,原图像截取的起始X坐标,原图像截取的起始Y坐标,原图像截取的宽度,原图像截取的高度，绘制图像的起始X坐标,绘制图像的起始Y坐标,绘制图像所需要的宽度,绘制图像所需要的高度);
+        var dWidth = realWidth;//绘制实际宽度
+        var dHeight = realHeight;//绘制实际高度
+        if(dWidth > myCanWidth)
+        {
+            dHeight = myCanWidth / dWidth *  dHeight;
+            dWidth = myCanWidth;
+        }
+        if(dHeight > myCanHeight)
+        {
+            dWidth = myCanHeight / dHeight * dWidth ;
+            dHeight = myCanHeight;
+        }
+        ctx.drawImage(img,0,0, realWidth, realHeight, 0,0,  dWidth, dHeight);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//补充封面图
+$('.dialogCoverSup .selImgBtn').click(function(){
+    openBrowseSup()
+})
+$('.dialogCoverSup .sureImgBtn').click(function(){
+    // uploadFile()
+    var data=document.getElementById("supCan").toDataURL("image/jpeg");
+    $('.supCover .oneImgBox img').attr('src',data);
+    $('.dialogCoverSup').css({'display':'none'});
+    $('.supCover .oneImgBox .ImgBox').css({'display':'none'});
+})
+$('#filesup').change(function(){
+    changeFileSup()
+})
+$('.dialogCoverSup .closeImgBtn').click(function(){
+    $('.dialogCoverSup').css({'display':'none'});
+    if($('.supCover .oneImgBox .ImgBox').css('display')=='none'){
+        $('.supCover .oneImgBox .ImgBox').css({'display':'none'});
+    }
+
+})
+//1、打开浏览器 onClick="openBrowse()" onchange="changeFile()" onClick="uploadFile()"
+function openBrowseSup(){
+    var ie=navigator.appName=="Microsoft Internet Explorer" ? true : false;
+    if(ie){
+        document.getElementById("filesup").click();
+    }else{
+        var a=document.createEvent("MouseEvents");
+        a.initEvent("click", true, true);
+        document.getElementById("filesup").dispatchEvent(a);
+    }
+}
+
+//2、从 file 域获取 本地图片 url
+
+//选择文件事件
+function changeFileSup() {
+    var url = getFileUrl("filesup");//根据id获取文件路径
+    preImgSup(url);
+    return false;
+}
+
+//3、将本地图片 显示到浏览器上
+function preImgSup(url) {
+
+    console.log('url===' + url);
+    //图片裁剪逻辑
+    if(jcrop_api)//判断jcrop_api是否被初始化过
+    {
+        jcrop_api.destroy();
+    }
+
+    //初始化预览div内容
+    initPreview();
+    var p = document.getElementById('Preview');
+    p.src = url;
+
+    //初始化图片
+    initTargetSup();
+    var image = document.getElementById('tarsup');
+    image.onload=function(){//图片加载是一个异步的过程
+        //获取图片文件真实宽度和大小
+        var img = new Image();
+        img.onload=function(){
+            realWidth = img.width;
+            realHeight = img.height;
+            if(realWidth<513||realHeight<513){
+                $tarsup.hide();
+                layer.msg('请选择尺寸不小于513*513px的图片')
+                return;
+            }
+            else{
+                //获取图片真实高度之后
+                initJcropSup();//初始化Jcrop插件
+                initCanvasSup();//初始化Canvas内容
+            }
+
+        };
+        img.src = url;
+    };
+    image.src = url;
+}
+
+//初始化Jcrop插件
+function initJcropSup(){
+
+    console.log('init',[xsize,ysize]);
+    $tarsup.removeAttr("style");//清空上一次初始化设置的样式
+    $tarsup.Jcrop({
+        onChange: updatePreviewSup,
+        onSelect: updatePreviewSup,
+        minSize:[513,513],
+        aspectRatio: 513 / 513
+    },function(){
+        //初始化后回调函数
+        // 获取图片实际显示的大小
+        var bounds = this.getBounds();
+        boundx = bounds[0];//图片实际显示宽度
+        boundy = bounds[1];//图片实际显示高度
+
+        // 保存jcrop_api变量
+        jcrop_api = this;
+
+    });
+}
+
+
+//更新显示预览内容
+function updatePreviewSup(c){
+    if (parseInt(c.w) > 0)
+    {
+        var rx = xsize / c.w;
+        var ry = ysize / c.h;
+
+        $pimg.css({
+            maxWidth:  Math.round(rx * boundx) + 'px',
+            maxHeight: Math.round(ry * boundy) + 'px',
+            width: Math.round(rx * boundx) + 'px',
+            height: Math.round(ry * boundy) + 'px',
+            marginLeft: '-' + Math.round(rx * c.x) + 'px',
+            marginTop: '-' + Math.round(ry * c.y) + 'px'
+        });
+
+        //更新canvas画板内容
+        var img=document.getElementById("tarsup");
+        var ct=document.getElementById("supCan");
+        var ctx=ct.getContext("2d");
+        //清空画板
+        ctx.clearRect(0,0, ct.width, ct.height);
+        //.drawImage(图像对象,原图像截取的起始X坐标,原图像截取的起始Y坐标,原图像截取的宽度,原图像截取的高度，绘制图像的起始X坐标,绘制图像的起始Y坐标,绘制图像所需要的宽度,绘制图像所需要的高度);
+        ctx.drawImage(img, c.x/boundx * realWidth,c.y/boundy * realHeight, c.w/boundx * realWidth, c.h/boundy * realHeight,0,0, ct.width, ct.height);
+    }
+}
+
+//初始化预览div内容
+function initTargetSup(){
+    $tarsup.removeAttr("style");//清空上一次初始化设置的样式
+    $tarsup.css({
+        maxWidth:  '100%',
+        maxHeight: '100%'
+    });
+}
+//初始化预览div内容
+// function initPreview(){
+//     $pimg.removeAttr("style");//清空上一次初始化设置的样式
+//     $pimg.css({
+//         maxWidth:  xsize + 'px',
+//         maxHeight: ysize + 'px'
+//     });
+// }
+
+//初始化canvas画板内容
+function initCanvasSup(){
+    //更新canvas画板内容
+    var img= document.getElementById("tarsup");
+    var ct= document.getElementById("supCan");
+    var ctx = ct.getContext("2d");
+
+    var myCanWidth = $('#supCan').width();
+    var myCanHeight = $('#supCan').height();
+
+    //清空画板
+    ctx.clearRect(0,0, ct.width, ct.height);
+
+    //.drawImage(图像对象,原图像截取的起始X坐标,原图像截取的起始Y坐标,原图像截取的宽度,原图像截取的高度，绘制图像的起始X坐标,绘制图像的起始Y坐标,绘制图像所需要的宽度,绘制图像所需要的高度);
+    var dWidth = realWidth;//绘制实际宽度
+    var dHeight = realHeight;//绘制实际高度
+    if(dWidth > myCanWidth)
+    {
+        dHeight = myCanWidth / dWidth *  dHeight;
+        dWidth = myCanWidth;
+    }
+    if(dHeight > myCanHeight)
+    {
+        dWidth = myCanHeight / dHeight * dWidth ;
+        dHeight = myCanHeight;
+    }
+    ctx.drawImage(img,0,0, realWidth, realHeight, 0,0,  dWidth, dHeight);
+}
+
+
+//目标人群 article/get_article_type
+var firstCla=[];
+var secondCla=[];
+var articleCla=[];
+var claData;
+var article_type;
+$.get(
+    '/admin/article/get_article_type',
+    function(res) {
+        console.log(res);
+        claData=res.target_population;
+        for (var i=0;i<claData.length;i++) {
+            var parent_id=claData[i]['parent_id'];
+            if(parent_id==0){
+                firstCla.push(claData[i]);
+            }
+            if(parent_id==1){
+                secondCla.push(claData[i]);
+            }
+        }
+        //一级分类默认显示
+        var firLen=firstCla.length;
+        for (var i=0;i<firLen;i++){
+            var option="<option value="+firstCla[i]['category_id']+">"+firstCla[i]['name']+"</option>";
+            $('.peopleOne').append(option);
+        }
+        //二级分类默认显示
+        var secLen=secondCla.length;
+        for (var i=0;i<secLen;i++){
+            var option="<option value="+secondCla[i]['category_id']+">"+secondCla[i]['name']+"</option>";
+            $('.peopleTwo').append(option);
+        }
+
+        //分类
+        article_type=res.article_type;
+        for (var i=0;i<secLen;i++){
+            if(res.article_type[i]['parent_id']==0){
+                $('.classParent').text(res.article_type[i]['name']);
+            }
+            else {
+                var classhtml='<label class="checkbox-inline"><input type="checkbox" value='+res.article_type[i]['category_id']+'>'+res.article_type[i]['name']+'</label>'
+                $('.classChild').append(classhtml);
+            }
+
+        }
+    }
+)
+//级联
+$(".peopleOne").change(function(){
+    $(this).siblings('select').empty();
+    var sel=$(this).find('option:selected').val();
+    for (var i=0;i<claData.length;i++) {
+        var parent_id=claData[i]['parent_id'];
+        if(parent_id==sel){
+            var option="<option value="+claData[i]['category_id']+">"+claData[i]['name']+"</option>";
+            $(this).siblings('.peopleTwo').append(option);
+        }
+    }
+})
+
+//添加段落导语
+$('.addIntBtn').click(function () {
+    var intHtml='<div class="IntSingle">' +
+                    '<p class="IntHead">段落导语<span class="delBtn">X</span></p>' +
+                    '<div class="textareaBox">' +
+                        '<textarea class="form-control" rows="4" placeholder="请输入10～100个汉字的导语"></textarea>' +
+                        '<span class="des_tip">0/100</span>' +
+                    '</div>' +
+                '</div>';
+    $('#sortable').append(intHtml);
+    if($('#isLocation').is(':checked')) {
+        var len=$('#sortable .IntSingle').length;
+        $('#sortable .IntSingle:last').attr('id',len);
+        $("html,body").animate({scrollTop: $("#"+len).offset().top}, 500);
+    }
+})
+
+$(function() {
+    $( "#sortable" ).sortable();
+    $( "#sortable" ).disableSelection();
+});
+$('html body').on('click','.IntSingle .delBtn',function () {
+    var $IntSingle=$(this).parents('.IntSingle')
+    layer.confirm('确定要删除改模块吗',function (index) {
+        $IntSingle.remove();
+        layer.close(index);
+    },function (index) {
+        layer.close(index);
+    });
+
+})
+// 产品卡更换图片
+$('html body').on('click','.IntSingle .change_img',function () {
+    $imgSingle=$(this).siblings('.goods_img');
+    var imgSrc=$(this).siblings('.goods_img').attr('src');
+    var changeImgModel='<div class="changeImgModel">\n' +
+        '\t\t\t<button type="button" class="btn btn-primary selImgBtn">选择图片</button>\n' +
+        '\t\t\t\t<button type="button" class="btn btn-success sureImgBtn">确定</button>\n' +
+        '\t\t\t\t<button type="button" class="btn btn-warning closeImgBtn">取消</button>\n' +
+        '\t\t\t<div class="head">\n' +
+        '\t\t\t\t<img src="'+imgSrc+'"  id="targetImg"/>\n' +
+        '\t\t\t\t<input type="file" id="fileImg" style="display: none;"/>\n' +
+        '\t\t\t</div>\n' +
+        '\n' +
+        '\t\t\t<div id="preview-paneImg">\n' +
+        '\t\t\t\t<div class="preview-container">\n' +
+        '\t\t\t\t\t<img src="" class="jcrop-preview" alt="Preview"  id="PreviewImg"/>\n' +
+        '\t\t\t\t</div>\n' +
+        '\t\t\t</div>\n' +
+        '<canvas id="myCanImg" width="513" height="513" ></canvas>' +
+        // '\t\t\t<div class="footer">\n' +
+        // '\t\t\t\t<button type="button" class="btn btn-success sureImgBtn">确定</button>\n' +
+        // '\t\t\t\t<button type="button" class="btn btn-warning closeImgBtn">取消</button>\n' +
+        // '\t\t\t</div>\n' +
+        '\t\t</div>';
+    $('html body').append(changeImgModel);
+    // 定义一些使用的变量
+    var jcrop_api,//jcrop对象
+        boundx,//图片实际显示宽度
+        boundy,//图片实际显示高度
+        realWidth,// 真实图片宽度
+        realHeight, //真实图片高度
+        // 使用的jquery对象
+        $targetImg = $('#targetImg'),
+        $previewImg = $('#preview-paneImg'),
+        $pcntImg = $('#preview-paneImg .preview-container'),
+        $pimgImg = $('#preview-paneImg .preview-container img'),
+        xsize = $pcntImg.width(),
+        ysize = $pcntImg.height();
+    $('.changeImgModel .selImgBtn').click(function () {
+        openBrowseImg()
+    });
+
+    $('.changeImgModel .sureImgBtn').click(function () {
+        // uploadFile()
+        var data=document.getElementById("myCanImg").toDataURL("image/jpeg");
+        $('.changeImgModel').remove();
+        $imgSingle.attr('src',data);
+    });
+    $('.changeImgModel .closeImgBtn').click(function () {
+        $('.changeImgModel').remove();
+    });
+
+    $('.changeImgModel #fileImg').change(function(){
+        changeFileImg()
+    });
+    //1、打开浏览器 onClick="openBrowse()" onchange="changeFile()" onClick="uploadFile()"
+    function openBrowseImg(){
+        var ie=navigator.appName=="Microsoft Internet Explorer" ? true : false;
+        if(ie){
+            document.getElementById("fileImg").click();
+        }else{
+            var a=document.createEvent("MouseEvents");
+            a.initEvent("click", true, true);
+            document.getElementById("fileImg").dispatchEvent(a);
+        }
+    }
+
+    //2、从 file 域获取 本地图片 url
+    function getFileUrlImg(sourceId) {
+        var url;
+        if (navigator.userAgent.indexOf("MSIE")>=1) { // IE
+            url = document.getElementById(sourceId).value;
+        } else if(navigator.userAgent.indexOf("Firefox")>0) { // Firefox
+            url = window.URL.createObjectURL(document.getElementById(sourceId).files.item(0));
+        } else if(navigator.userAgent.indexOf("Chrome")>0) { // Chrome
+            url = window.URL.createObjectURL(document.getElementById(sourceId).files.item(0));
+        } else if(navigator.userAgent.indexOf("Safari")>0) { // Chrome
+            url = window.URL.createObjectURL(document.getElementById(sourceId).files.item(0));
+        }
+        return url;
+    }
+    //选择文件事件
+    function changeFileImg() {
+        var url = getFileUrlImg("fileImg");//根据id获取文件路径
+        preImgImg(url);
+        return false;
+    }
+
+    //3、将本地图片 显示到浏览器上
+    function preImgImg(url) {
+
+        console.log('url===' + url);
+        //图片裁剪逻辑
+        if(jcrop_api)//判断jcrop_api是否被初始化过
+        {
+            jcrop_api.destroy();
+        }
+        //初始化预览div内容
+        initPreviewImg();
+        var p = document.getElementById('PreviewImg');
+        p.src = url;
+
+        //初始化图片
+        initTargetImg();
+        var image = document.getElementById('targetImg');
+        image.onload=function(){//图片加载是一个异步的过程
+            //获取图片文件真实宽度和大小
+            var img = new Image();
+            img.onload=function(){
+                realWidth = img.width;
+                realHeight = img.height;
+
+                //获取图片真实高度之后
+                initJcropImg();//初始化Jcrop插件
+                initCanvasImg();//初始化Canvas内容
+            };
+            img.src = url;
+        };
+        image.src = url;
+    }
+
+    //初始化Jcrop插件
+    function initJcropImg(){
+        console.log('init',[xsize,ysize]);
+        $targetImg.removeAttr("style");//清空上一次初始化设置的样式
+        $targetImg.Jcrop({
+            onChange: updatePreviewImg,
+            onSelect: updatePreviewImg,
+            aspectRatio: 513 / 513
+        },function(){
+            //初始化后回调函数
+            // 获取图片实际显示的大小
+            var bounds = this.getBounds();
+            boundx = bounds[0];//图片实际显示宽度
+            boundy = bounds[1];//图片实际显示高度
+
+            // 保存jcrop_api变量
+            jcrop_api = this;
+
+        });
+    }
+
+
+    //更新显示预览内容
+    function updatePreviewImg(c){
+        if (parseInt(c.w) > 0)
+        {
+            var rx = xsize / c.w;
+            var ry = ysize / c.h;
+
+            $pimgImg.css({
+                maxWidth:  Math.round(rx * boundx) + 'px',
+                maxHeight: Math.round(ry * boundy) + 'px',
+                width: Math.round(rx * boundx) + 'px',
+                height: Math.round(ry * boundy) + 'px',
+                marginLeft: '-' + Math.round(rx * c.x) + 'px',
+                marginTop: '-' + Math.round(ry * c.y) + 'px'
+            });
+
+            //更新canvas画板内容
+            var img=document.getElementById("targetImg");
+            var ct=document.getElementById("myCanImg");
+            var ctx=ct.getContext("2d");
+            //清空画板
+            ctx.clearRect(0,0, ct.width, ct.height);
+            //.drawImage(图像对象,原图像截取的起始X坐标,原图像截取的起始Y坐标,原图像截取的宽度,原图像截取的高度，绘制图像的起始X坐标,绘制图像的起始Y坐标,绘制图像所需要的宽度,绘制图像所需要的高度);
+            ctx.drawImage(img, c.x/boundx * realWidth,c.y/boundy * realHeight, c.w/boundx * realWidth, c.h/boundy * realHeight,0,0, ct.width, ct.height);
+        }
+    }
+
+    //初始化预览div内容
+    function initTargetImg(){
+        $targetImg.removeAttr("style");//清空上一次初始化设置的样式
+        $targetImg.css({
+            maxWidth:  '100%',
+            maxHeight: '100%'
+        });
+    }
+    //初始化预览div内容
+    function initPreviewImg(){
+        $pimgImg.removeAttr("style");//清空上一次初始化设置的样式
+        $pimgImg.css({
+            maxWidth:  xsize + 'px',
+            maxHeight: ysize + 'px'
+        });
+    }
+
+    //初始化canvas画板内容
+    function initCanvasImg(){
+        //更新canvas画板内容
+        var img= document.getElementById("targetImg");
+        var ct= document.getElementById("myCanImg");
+        var ctx = ct.getContext("2d");
+
+        var myCanWidth = $('#myCanImg').width();
+        var myCanHeight = $('#myCanImg').height();
+
+        //清空画板
+        ctx.clearRect(0,0, ct.width, ct.height);
+
+        //.drawImage(图像对象,原图像截取的起始X坐标,原图像截取的起始Y坐标,原图像截取的宽度,原图像截取的高度，绘制图像的起始X坐标,绘制图像的起始Y坐标,绘制图像所需要的宽度,绘制图像所需要的高度);
+        var dWidth = realWidth;//绘制实际宽度
+        var dHeight = realHeight;//绘制实际高度
+        if(dWidth > myCanWidth)
+        {
+            dHeight = myCanWidth / dWidth *  dHeight;
+            dWidth = myCanWidth;
+        }
+        if(dHeight > myCanHeight)
+        {
+            dWidth = myCanHeight / dHeight * dWidth ;
+            dHeight = myCanHeight;
+        }
+        ctx.drawImage(img,0,0, realWidth, realHeight, 0,0,  dWidth, dHeight);
+    }
+})
+//段落导语提示
+$('html body').on('keyup','.IntSingle .textareaBox textarea',function () {
+    var length = 100;
+    var content_len = $(this).val().length;
+    var in_len = length-content_len;
+    $(this).siblings(".des_tip").html(content_len+'/100');
+    if(content_len>length||content_len<10){
+        $(this).siblings(".des_tip").addClass('warning');
+    }
+    else if(content_len<=length){
+        $(this).siblings(".des_tip").removeClass('warning');
+    }
+});
+$('html body').on('blur','.IntSingle .textareaBox textarea',function () {
+    var length = 100;
+    var content_len = $(this).val().length;
+    var in_len = length-content_len;
+    if(content_len!=''&&(content_len>length||content_len<10) ){
+        layer.msg('段落描述长度需要在10-100字之间')
+    }
+});
+//产品卡描述提示
+$('html body').on('keyup','.IntSingle .goods_des',function () {
+    var length = 100;
+    var content_len = $(this).val().length;
+    var in_len = length-content_len;
+    $(this).siblings(".card_tip").html(content_len+'/100');
+    if(content_len>length||content_len<10){
+        $(this).siblings(".card_tip").addClass('warning');
+    }
+    else if(content_len<=length){
+        $(this).siblings(".card_tip").removeClass('warning');
+    }
+});
+$('html body').on('blur','.IntSingle .goods_des',function () {
+    var length = 100;
+    var content_len = $(this).val().length;
+    var in_len = length-content_len;
+    if(content_len!=''&&(content_len>length||content_len<10) ){
+        layer.msg('产品描述长度需要在10-100字之间')
+    }
+});
+
+//添加图片
+$('.addImgBtn').click(function () {
+    var addImgModel='<div class="addImgModel">\n' +
+        '\t\t\t<button type="button" class="btn btn-primary selImgBtn">选择图片</button>\n' +
+        '\t\t\t<button type="button" class="btn btn-success sureImgBtn">确定</button>\n' +
+        '\t\t\t<button type="button" class="btn btn-warning closeImgBtn">取消</button>\n' +
+        '\t\t\t<div class="head">\n' +
+        '\t\t\t\t<img id="targetImg" />\n' +
+        '\t\t\t\t<input type="file" id="fileImg" style="display: none;"/>\n' +
+        '\t\t\t</div>\n' +
+        '\n' +
+        '\t\t\t<div id="preview-paneImg">\n' +
+        '\t\t\t\t<div class="preview-container">\n' +
+        '\t\t\t\t\t<img src="" class="jcrop-preview" alt="Preview"  id="PreviewImg"/>\n' +
+        '\t\t\t\t</div>\n' +
+        '\t\t\t</div>\n' +
+                '<canvas id="myCanImg" width="513" height="513"></canvas>' +
+        // '\t\t\t<div class="footer">\n' +
+        // '\t\t\t\t<button type="button" class="btn btn-success sureImgBtn">确定</button>\n' +
+        // '\t\t\t\t<button type="button" class="btn btn-warning closeImgBtn">取消</button>\n' +
+        // '\t\t\t</div>\n' +
+        '\t\t</div>';
+    $('html body').append(addImgModel);
+    // 定义一些使用的变量
+    var jcrop_api,//jcrop对象
+        boundx,//图片实际显示宽度
+        boundy,//图片实际显示高度
+        realWidth,// 真实图片宽度
+        realHeight, //真实图片高度
+        // 使用的jquery对象
+        $targetImg = $('#targetImg'),
+        $previewImg = $('#preview-paneImg'),
+        $pcntImg = $('#preview-paneImg .preview-container'),
+        $pimgImg = $('#preview-paneImg .preview-container img'),
+        xsize = $pcntImg.width(),
+        ysize = $pcntImg.height();
+        $('.addImgModel .selImgBtn').click(function () {
+            openBrowseImg()
+        });
+
+        $('.addImgModel .sureImgBtn').click(function () {
+            // uploadFile()
+            var data=document.getElementById("myCanImg").toDataURL("image/jpeg");
+            $('.addImgModel').remove();
+            var imgBoxHtml='<div class="IntSingle">' +
+                '<p class="IntHead">段落图片<span class="delBtn">X</span></p>' +
+                '<img class="imgSingle" src=""/>' +
+                '<button type="button" class="btn btn-warning changeImgBtn">更换图片</button>' +
+                '</div>';
+            $('#sortable').append(imgBoxHtml);
+            $('.imgSingle:last').attr('src',data);
+            if($('#isLocation').is(':checked')) {
+                var len=$('#sortable .IntSingle').length;
+                $('#sortable .IntSingle:last').attr('id',len);
+                $("html,body").animate({scrollTop: $("#"+len).offset().top}, 500);
+            }
+        });
+        $('.addImgModel .closeImgBtn').click(function () {
+            $('.addImgModel').remove();
+        });
+
+        $('.addImgModel #fileImg').change(function(){
+            changeFileImg()
+        });
+
+    //1、打开浏览器 onClick="openBrowse()" onchange="changeFile()" onClick="uploadFile()"
+        function openBrowseImg(){
+            var ie=navigator.appName=="Microsoft Internet Explorer" ? true : false;
+            if(ie){
+                document.getElementById("fileImg").click();
+            }else{
+                var a=document.createEvent("MouseEvents");
+                a.initEvent("click", true, true);
+                document.getElementById("fileImg").dispatchEvent(a);
+            }
+        }
+
+    //2、从 file 域获取 本地图片 url
+        function getFileUrlImg(sourceId) {
+            var url;
+            if (navigator.userAgent.indexOf("MSIE")>=1) { // IE
+                url = document.getElementById(sourceId).value;
+            } else if(navigator.userAgent.indexOf("Firefox")>0) { // Firefox
+                url = window.URL.createObjectURL(document.getElementById(sourceId).files.item(0));
+            } else if(navigator.userAgent.indexOf("Chrome")>0) { // Chrome
+                url = window.URL.createObjectURL(document.getElementById(sourceId).files.item(0));
+            } else if(navigator.userAgent.indexOf("Safari")>0) { // Chrome
+                url = window.URL.createObjectURL(document.getElementById(sourceId).files.item(0));
+            }
+            return url;
+        }
+    //选择文件事件
+        function changeFileImg() {
+            var url = getFileUrlImg("fileImg");//根据id获取文件路径
+            preImgImg(url);
+            return false;
+        }
+
+    //3、将本地图片 显示到浏览器上
+        function preImgImg(url) {
+
+            console.log('url===' + url);
+            //图片裁剪逻辑
+            if(jcrop_api)//判断jcrop_api是否被初始化过
+            {
+                jcrop_api.destroy();
+            }
+            //初始化预览div内容
+            initPreviewImg();
+            var p = document.getElementById('PreviewImg');
+            p.src = url;
+
+            //初始化图片
+            initTargetImg();
+            var image = document.getElementById('targetImg');
+            image.onload=function(){//图片加载是一个异步的过程
+                //获取图片文件真实宽度和大小
+                var img = new Image();
+                img.onload=function(){
+                    realWidth = img.width;
+                    realHeight = img.height;
+
+                    //获取图片真实高度之后
+                    initJcropImg();//初始化Jcrop插件
+                    initCanvasImg();//初始化Canvas内容
+                };
+                img.src = url;
+            };
+            image.src = url;
+        }
+
+    //初始化Jcrop插件
+        function initJcropImg(){
+            console.log('init',[xsize,ysize]);
+            $targetImg.removeAttr("style");//清空上一次初始化设置的样式
+            $targetImg.Jcrop({
+                onChange: updatePreviewImg,
+                onSelect: updatePreviewImg
+                // aspectRatio: 513 / 513
+            },function(){
+                //初始化后回调函数
+                // 获取图片实际显示的大小
+                var bounds = this.getBounds();
+                boundx = bounds[0];//图片实际显示宽度
+                boundy = bounds[1];//图片实际显示高度
+
+                // 保存jcrop_api变量
+                jcrop_api = this;
+
+            });
+        }
+
+
+    //更新显示预览内容
+        function updatePreviewImg(c){
+            if (parseInt(c.w) > 0)
+            {
+                var rx = xsize / c.w;
+                var ry = ysize / c.h;
+
+                $pimgImg.css({
+                    maxWidth:  Math.round(rx * boundx) + 'px',
+                    maxHeight: Math.round(ry * boundy) + 'px',
+                    width: Math.round(rx * boundx) + 'px',
+                    height: Math.round(ry * boundy) + 'px',
+                    marginLeft: '-' + Math.round(rx * c.x) + 'px',
+                    marginTop: '-' + Math.round(ry * c.y) + 'px'
+                });
+
+                //更新canvas画板内容
+                var img=document.getElementById("targetImg");
+                var ct=document.getElementById("myCanImg");
+                var ctx=ct.getContext("2d");
+                //清空画板
+                ctx.clearRect(0,0, ct.width, ct.height);
+                //.drawImage(图像对象,原图像截取的起始X坐标,原图像截取的起始Y坐标,原图像截取的宽度,原图像截取的高度，绘制图像的起始X坐标,绘制图像的起始Y坐标,绘制图像所需要的宽度,绘制图像所需要的高度);
+                ctx.drawImage(img, c.x/boundx * realWidth,c.y/boundy * realHeight, c.w/boundx * realWidth, c.h/boundy * realHeight,0,0, ct.width, ct.height);
+            }
+        }
+
+    //初始化预览div内容
+        function initTargetImg(){
+            $targetImg.removeAttr("style");//清空上一次初始化设置的样式
+            $targetImg.css({
+                maxWidth:  '100%',
+                maxHeight: '100%'
+            });
+        }
+    //初始化预览div内容
+        function initPreviewImg(){
+            $pimgImg.removeAttr("style");//清空上一次初始化设置的样式
+            $pimgImg.css({
+                maxWidth:  xsize + 'px',
+                maxHeight: ysize + 'px'
+            });
+        }
+
+    //初始化canvas画板内容
+        function initCanvasImg(){
+            //更新canvas画板内容
+            var img= document.getElementById("targetImg");
+            var ct= document.getElementById("myCanImg");
+            var ctx = ct.getContext("2d");
+
+            var myCanWidth = $('#myCanImg').width();
+            var myCanHeight = $('#myCanImg').height();
+
+            //清空画板
+            ctx.clearRect(0,0, ct.width, ct.height);
+
+            //.drawImage(图像对象,原图像截取的起始X坐标,原图像截取的起始Y坐标,原图像截取的宽度,原图像截取的高度，绘制图像的起始X坐标,绘制图像的起始Y坐标,绘制图像所需要的宽度,绘制图像所需要的高度);
+            var dWidth = realWidth;//绘制实际宽度
+            var dHeight = realHeight;//绘制实际高度
+            if(dWidth > myCanWidth)
+            {
+                dHeight = myCanWidth / dWidth *  dHeight;
+                dWidth = myCanWidth;
+            }
+            if(dHeight > myCanHeight)
+            {
+                dWidth = myCanHeight / dHeight * dWidth ;
+                dHeight = myCanHeight;
+            }
+            ctx.drawImage(img,0,0, realWidth, realHeight, 0,0,  dWidth, dHeight);
+        }
+
+})
+
+//添加图片--更换图片
+$('html body').on('click','.IntSingle .changeImgBtn',function () {
+    $imgSingle=$(this).siblings('.imgSingle');
+    var imgSrc=$(this).siblings('.imgSingle').attr('src');
+    var changeImgModel='<div class="changeImgModel">\n' +
+        '\t\t\t<button type="button" class="btn btn-primary selImgBtn">选择图片</button>\n' +
+        '\t\t\t<button type="button" class="btn btn-success sureImgBtn">确定</button>\n' +
+        '\t\t\t<button type="button" class="btn btn-warning closeImgBtn">取消</button>\n' +
+        '\t\t\t<div class="head">\n' +
+        '\t\t\t\t<img id="targetImg" src="'+imgSrc+'"/>\n' +
+        '\t\t\t\t<input type="file" id="fileImg" style="display: none;"/>\n' +
+        '\t\t\t</div>\n' +
+        '\n' +
+        '\t\t\t<div id="preview-paneImg">\n' +
+        '\t\t\t\t<div class="preview-container">\n' +
+        '\t\t\t\t\t<img src="" class="jcrop-preview" alt="Preview"  id="PreviewImg"/>\n' +
+        '\t\t\t\t</div>\n' +
+        '\t\t\t</div>\n' +
+        '<canvas id="myCanImg" width="513" height="513" ></canvas>' +
+        // '\t\t\t<div class="footer">\n' +
+        // '\t\t\t\t<button type="button" class="btn btn-success sureImgBtn">确定</button>\n' +
+        // '\t\t\t\t<button type="button" class="btn btn-warning closeImgBtn">取消</button>\n' +
+        // '\t\t\t</div>\n' +
+        '\t\t</div>';
+    $('html body').append(changeImgModel);
+    // 定义一些使用的变量
+    var jcrop_api,//jcrop对象
+        boundx,//图片实际显示宽度
+        boundy,//图片实际显示高度
+        realWidth,// 真实图片宽度
+        realHeight, //真实图片高度
+        // 使用的jquery对象
+        $targetImg = $('#targetImg'),
+        $previewImg = $('#preview-paneImg'),
+        $pcntImg = $('#preview-paneImg .preview-container'),
+        $pimgImg = $('#preview-paneImg .preview-container img'),
+        xsize = $pcntImg.width(),
+        ysize = $pcntImg.height();
+    $('.changeImgModel .selImgBtn').click(function () {
+        openBrowseImg()
+    });
+
+    $('.changeImgModel .sureImgBtn').click(function () {
+        // uploadFile()
+        var data=document.getElementById("myCanImg").toDataURL("image/jpeg");
+        $('.changeImgModel').remove();
+        $imgSingle.attr('src',data);
+    });
+    $('.changeImgModel .closeImgBtn').click(function () {
+        $('.changeImgModel').remove();
+    });
+
+    $('.changeImgModel #fileImg').change(function(){
+        changeFileImg()
+    });
+    //1、打开浏览器 onClick="openBrowse()" onchange="changeFile()" onClick="uploadFile()"
+    function openBrowseImg(){
+        var ie=navigator.appName=="Microsoft Internet Explorer" ? true : false;
+        if(ie){
+            document.getElementById("fileImg").click();
+        }else{
+            var a=document.createEvent("MouseEvents");
+            a.initEvent("click", true, true);
+            document.getElementById("fileImg").dispatchEvent(a);
+        }
+    }
+
+    //2、从 file 域获取 本地图片 url
+    function getFileUrlImg(sourceId) {
+        var url;
+        if (navigator.userAgent.indexOf("MSIE")>=1) { // IE
+            url = document.getElementById(sourceId).value;
+        } else if(navigator.userAgent.indexOf("Firefox")>0) { // Firefox
+            url = window.URL.createObjectURL(document.getElementById(sourceId).files.item(0));
+        } else if(navigator.userAgent.indexOf("Chrome")>0) { // Chrome
+            url = window.URL.createObjectURL(document.getElementById(sourceId).files.item(0));
+        } else if(navigator.userAgent.indexOf("Safari")>0) { // Chrome
+            url = window.URL.createObjectURL(document.getElementById(sourceId).files.item(0));
+        }
+        return url;
+    }
+    //选择文件事件
+    function changeFileImg() {
+        var url = getFileUrlImg("fileImg");//根据id获取文件路径
+        preImgImg(url);
+        return false;
+    }
+
+    //3、将本地图片 显示到浏览器上
+    function preImgImg(url) {
+
+        console.log('url===' + url);
+        //图片裁剪逻辑
+        if(jcrop_api)//判断jcrop_api是否被初始化过
+        {
+            jcrop_api.destroy();
+        }
+        //初始化预览div内容
+        initPreviewImg();
+        var p = document.getElementById('PreviewImg');
+        p.src = url;
+
+        //初始化图片
+        initTargetImg();
+        var image = document.getElementById('targetImg');
+        image.onload=function(){//图片加载是一个异步的过程
+            //获取图片文件真实宽度和大小
+            var img = new Image();
+            img.onload=function(){
+                realWidth = img.width;
+                realHeight = img.height;
+
+                //获取图片真实高度之后
+                initJcropImg();//初始化Jcrop插件
+                initCanvasImg();//初始化Canvas内容
+            };
+            img.src = url;
+        };
+        image.src = url;
+    }
+
+    //初始化Jcrop插件
+    function initJcropImg(){
+        console.log('init',[xsize,ysize]);
+        $targetImg.removeAttr("style");//清空上一次初始化设置的样式
+        $targetImg.Jcrop({
+            onChange: updatePreviewImg,
+            onSelect: updatePreviewImg
+            // aspectRatio: 513 / 513
+        },function(){
+            //初始化后回调函数
+            // 获取图片实际显示的大小
+            var bounds = this.getBounds();
+            boundx = bounds[0];//图片实际显示宽度
+            boundy = bounds[1];//图片实际显示高度
+
+            // 保存jcrop_api变量
+            jcrop_api = this;
+
+        });
+    }
+
+
+    //更新显示预览内容
+    function updatePreviewImg(c){
+        if (parseInt(c.w) > 0)
+        {
+            var rx = xsize / c.w;
+            var ry = ysize / c.h;
+
+            $pimgImg.css({
+                maxWidth:  Math.round(rx * boundx) + 'px',
+                maxHeight: Math.round(ry * boundy) + 'px',
+                width: Math.round(rx * boundx) + 'px',
+                height: Math.round(ry * boundy) + 'px',
+                marginLeft: '-' + Math.round(rx * c.x) + 'px',
+                marginTop: '-' + Math.round(ry * c.y) + 'px'
+            });
+
+            //更新canvas画板内容
+            var img=document.getElementById("targetImg");
+            var ct=document.getElementById("myCanImg");
+            var ctx=ct.getContext("2d");
+            //清空画板
+            ctx.clearRect(0,0, ct.width, ct.height);
+            //.drawImage(图像对象,原图像截取的起始X坐标,原图像截取的起始Y坐标,原图像截取的宽度,原图像截取的高度，绘制图像的起始X坐标,绘制图像的起始Y坐标,绘制图像所需要的宽度,绘制图像所需要的高度);
+            ctx.drawImage(img, c.x/boundx * realWidth,c.y/boundy * realHeight, c.w/boundx * realWidth, c.h/boundy * realHeight,0,0, ct.width, ct.height);
+        }
+    }
+
+    //初始化预览div内容
+    function initTargetImg(){
+        $targetImg.removeAttr("style");//清空上一次初始化设置的样式
+        $targetImg.css({
+            maxWidth:  '100%',
+            maxHeight: '100%'
+        });
+    }
+    //初始化预览div内容
+    function initPreviewImg(){
+        $pimgImg.removeAttr("style");//清空上一次初始化设置的样式
+        $pimgImg.css({
+            maxWidth:  xsize + 'px',
+            maxHeight: ysize + 'px'
+        });
+    }
+
+    //初始化canvas画板内容
+    function initCanvasImg(){
+        //更新canvas画板内容
+        var img= document.getElementById("targetImg");
+        var ct= document.getElementById("myCanImg");
+        var ctx = ct.getContext("2d");
+
+        var myCanWidth = $('#myCanImg').width();
+        var myCanHeight = $('#myCanImg').height();
+
+        //清空画板
+        ctx.clearRect(0,0, ct.width, ct.height);
+
+        //.drawImage(图像对象,原图像截取的起始X坐标,原图像截取的起始Y坐标,原图像截取的宽度,原图像截取的高度，绘制图像的起始X坐标,绘制图像的起始Y坐标,绘制图像所需要的宽度,绘制图像所需要的高度);
+        var dWidth = realWidth;//绘制实际宽度
+        var dHeight = realHeight;//绘制实际高度
+        if(dWidth > myCanWidth)
+        {
+            dHeight = myCanWidth / dWidth *  dHeight;
+            dWidth = myCanWidth;
+        }
+        if(dHeight > myCanHeight)
+        {
+            dWidth = myCanHeight / dHeight * dWidth ;
+            dHeight = myCanHeight;
+        }
+        ctx.drawImage(img,0,0, realWidth, realHeight, 0,0,  dWidth, dHeight);
+    }
+
+});
+
+//三图
+$('.threeImgBox .sinImgBox').click(function () {
+    var imgIndex=$('.threeImgBox .sinImgBox').index(this);
+    console.log('第'+imgIndex+'张图')
+    var threeImgModel='<div class="threeImgModel">\n' +
+        '\t\t\t<button type="button" class="btn btn-primary selImgBtn">选择图片</button>\n' +
+        '\t\t\t<button type="button" class="btn btn-success sureImgBtn">确定</button>\n' +
+        '\t\t\t<button type="button" class="btn btn-warning closeImgBtn">取消</button>\n' +
+        '\t\t\t<div class="head">\n' +
+        '\t\t\t\t<img id="targetImg" />\n' +
+        '\t\t\t\t<input type="file" id="fileImg" style="display: none;"/>\n' +
+        '\t\t\t</div>\n' +
+        '\n' +
+        '\t\t\t<div id="preview-paneImg">\n' +
+        '\t\t\t\t<div class="preview-container">\n' +
+        '\t\t\t\t\t<img src="" class="jcrop-preview" alt="Preview"  id="PreviewImg"/>\n' +
+        '\t\t\t\t</div>\n' +
+        '\t\t\t</div>\n' +
+        '<canvas id="myCanImg" width="750" height="422"></canvas>' +
+        // '\t\t\t<div class="footer">\n' +
+        // '\t\t\t\t<button type="button" class="btn btn-success sureImgBtn">确定</button>\n' +
+        // '\t\t\t\t<button type="button" class="btn btn-warning closeImgBtn">取消</button>\n' +
+        // '\t\t\t</div>\n' +
+        '\t\t</div>';
+    $('html body').append(threeImgModel);
+    // 定义一些使用的变量
+    var jcrop_api,//jcrop对象
+        boundx,//图片实际显示宽度
+        boundy,//图片实际显示高度
+        realWidth,// 真实图片宽度
+        realHeight, //真实图片高度
+        // 使用的jquery对象
+        $targetImg = $('#targetImg'),
+        $previewImg = $('#preview-paneImg'),
+        $pcntImg = $('#preview-paneImg .preview-container'),
+        $pimgImg = $('#preview-paneImg .preview-container img'),
+        xsize = $pcntImg.width(),
+        ysize = $pcntImg.height();
+    $('.threeImgModel .selImgBtn').click(function () {
+        openBrowseImg()
+    });
+
+    $('.threeImgModel .sureImgBtn').click(function () {
+        // uploadFile()
+        var data=document.getElementById("myCanImg").toDataURL("image/jpeg");
+        // console.log(data)
+        $('.threeImgBox .sinImgBox:eq('+imgIndex+') .ImgBox').hide();
+        $('.threeImgBox .sinImgBox:eq('+imgIndex+') img').attr('src',data);
+        $('.threeImgModel').remove();
+    });
+    $('.threeImgModel .closeImgBtn').click(function () {
+        $('.threeImgModel').remove();
+        // if($('.threeImgBox .sinImgBox:eq('+imgIndex+') ImgBox').css('display')=='none'){
+        //     $('.threeImgBox .sinImgBox:eq('+imgIndex+') ImgBox').css({'display':'none'});
+        // }
+    });
+
+    $('.threeImgModel #fileImg').change(function(){
+        changeFileImg()
+    });
+
+    //1.
+    function openBrowseImg(){
+        var ie=navigator.appName=="Microsoft Internet Explorer" ? true : false;
+        if(ie){
+            document.getElementById("fileImg").click();
+        }else{
+            var a=document.createEvent("MouseEvents");
+            a.initEvent("click", true, true);
+            document.getElementById("fileImg").dispatchEvent(a);
+        }
+    }
+
+    //2、从 file 域获取 本地图片 url
+    function getFileUrlImg(sourceId) {
+        var url;
+        if (navigator.userAgent.indexOf("MSIE")>=1) { // IE
+            url = document.getElementById(sourceId).value;
+        } else if(navigator.userAgent.indexOf("Firefox")>0) { // Firefox
+            url = window.URL.createObjectURL(document.getElementById(sourceId).files.item(0));
+        } else if(navigator.userAgent.indexOf("Chrome")>0) { // Chrome
+            url = window.URL.createObjectURL(document.getElementById(sourceId).files.item(0));
+        } else if(navigator.userAgent.indexOf("Safari")>0) { // Chrome
+            url = window.URL.createObjectURL(document.getElementById(sourceId).files.item(0));
+        }
+        return url;
+    }
+    //选择文件事件
+    function changeFileImg() {
+        var url = getFileUrlImg("fileImg");//根据id获取文件路径
+        preImgImg(url);
+        return false;
+    }
+
+    //3、将本地图片 显示到浏览器上
+    function preImgImg(url) {
+
+        console.log('url===' + url);
+        //图片裁剪逻辑
+        if(jcrop_api)//判断jcrop_api是否被初始化过
+        {
+            jcrop_api.destroy();
+        }
+        //初始化预览div内容
+        initPreviewImg();
+        var p = document.getElementById('PreviewImg');
+        p.src = url;
+
+        //初始化图片
+        initTargetImg();
+        var image = document.getElementById('targetImg');
+        image.onload=function(){//图片加载是一个异步的过程
+            //获取图片文件真实宽度和大小
+            var img = new Image();
+            img.onload=function(){
+                realWidth = img.width;
+                realHeight = img.height;
+                if(realWidth<750||realHeight<422){
+                    $targetImg.hide();
+                    layer.msg('请选择尺寸不小于750*422px的图片')
+                    return;
+                }
+                else{
+                    //获取图片真实高度之后
+                    initJcropImg();//初始化Jcrop插件
+                    initCanvasImg();//初始化Canvas内容
+                }
+
+            };
+            img.src = url;
+        };
+        image.src = url;
+    }
+
+    //初始化Jcrop插件
+    function initJcropImg(){
+        console.log('init',[xsize,ysize]);
+        $targetImg.removeAttr("style");//清空上一次初始化设置的样式
+        $targetImg.Jcrop({
+            onChange: updatePreviewImg,
+            onSelect: updatePreviewImg,
+            minSize:[750,422],
+            aspectRatio: 750 / 422
+        },function(){
+            //初始化后回调函数
+            // 获取图片实际显示的大小
+            var bounds = this.getBounds();
+            boundx = bounds[0];//图片实际显示宽度
+            boundy = bounds[1];//图片实际显示高度
+
+            // 保存jcrop_api变量
+            jcrop_api = this;
+
+        });
+    }
+
+
+    //更新显示预览内容
+    function updatePreviewImg(c){
+        if (parseInt(c.w) > 0)
+        {
+            var rx = xsize / c.w;
+            var ry = ysize / c.h;
+
+            $pimgImg.css({
+                maxWidth:  Math.round(rx * boundx) + 'px',
+                maxHeight: Math.round(ry * boundy) + 'px',
+                width: Math.round(rx * boundx) + 'px',
+                height: Math.round(ry * boundy) + 'px',
+                marginLeft: '-' + Math.round(rx * c.x) + 'px',
+                marginTop: '-' + Math.round(ry * c.y) + 'px'
+            });
+
+            //更新canvas画板内容
+            var img=document.getElementById("targetImg");
+            var ct=document.getElementById("myCanImg");
+            var ctx=ct.getContext("2d");
+            //清空画板
+            ctx.clearRect(0,0, ct.width, ct.height);
+            //.drawImage(图像对象,原图像截取的起始X坐标,原图像截取的起始Y坐标,原图像截取的宽度,原图像截取的高度，绘制图像的起始X坐标,绘制图像的起始Y坐标,绘制图像所需要的宽度,绘制图像所需要的高度);
+            ctx.drawImage(img, c.x/boundx * realWidth,c.y/boundy * realHeight, c.w/boundx * realWidth, c.h/boundy * realHeight,0,0, ct.width, ct.height);
+        }
+    }
+
+    //初始化预览div内容
+    function initTargetImg(){
+        $targetImg.removeAttr("style");//清空上一次初始化设置的样式
+        $targetImg.css({
+            maxWidth:  '100%',
+            maxHeight: '100%'
+        });
+    }
+    //初始化预览div内容
+    function initPreviewImg(){
+        $pimgImg.removeAttr("style");//清空上一次初始化设置的样式
+        $pimgImg.css({
+            maxWidth:  xsize + 'px',
+            maxHeight: ysize + 'px'
+        });
+    }
+
+    //初始化canvas画板内容
+    function initCanvasImg(){
+        //更新canvas画板内容
+        var img= document.getElementById("targetImg");
+        var ct= document.getElementById("myCanImg");
+        var ctx = ct.getContext("2d");
+
+        var myCanWidth = $('#myCanImg').width();
+        var myCanHeight = $('#myCanImg').height();
+
+        //清空画板
+        ctx.clearRect(0,0, ct.width, ct.height);
+
+        //.drawImage(图像对象,原图像截取的起始X坐标,原图像截取的起始Y坐标,原图像截取的宽度,原图像截取的高度，绘制图像的起始X坐标,绘制图像的起始Y坐标,绘制图像所需要的宽度,绘制图像所需要的高度);
+        var dWidth = realWidth;//绘制实际宽度
+        var dHeight = realHeight;//绘制实际高度
+        if(dWidth > myCanWidth)
+        {
+            dHeight = myCanWidth / dWidth *  dHeight;
+            dWidth = myCanWidth;
+        }
+        if(dHeight > myCanHeight)
+        {
+            dWidth = myCanHeight / dHeight * dWidth ;
+            dHeight = myCanHeight;
+        }
+        ctx.drawImage(img,0,0, realWidth, realHeight, 0,0,  dWidth, dHeight);
+    }
+
+})
+
+//预览
+$('.previewBtn').click(function () {
+    var obj;
+    var title=$('#titleInp').val();
+    var leads=$('.leads').val();
+    if(title==''){
+        layer.msg('请填写标题');
+        return;
+    }
+    else if (title.length<4){
+        layer.msg('标题不能少于4个字');
+        return;
+    }
+    else if (title.length>19){
+        layer.msg('标题不能多于19个字');
+        return;
+    }
+
+    if(leads==''){
+        layer.msg('请填写导语');
+        return;
+    }
+    else if (leads.length<10){
+        layer.msg('导语不能少于10个字');
+        return;
+    }
+    else if (leads.length>100){
+        layer.msg('导语不能多于100个字');
+        return;
+    }
+    var len=$('#sortable .IntSingle').length;
+    var content=[];
+    for (var i=0;i<len;i++){
+        var single;
+        var addType=$('#sortable .IntSingle:eq('+i+') .IntHead').text();
+        if(addType.indexOf('段落图片')!=-1){
+            single={
+                type:2,
+                img:$('#sortable .IntSingle:eq('+i+') .imgSingle').attr('src'),
+                describe:'',
+                link:'',
+                price:'',
+                goods_name:'',
+                shop_name:''
+
+            }
+        }
+        else if(addType.indexOf('段落导语')!=-1){
+            var describe=$('#sortable .IntSingle:eq('+i+') textarea').val();
+            if(describe==''){
+                layer.msg('请填写段落导语');
+            }
+            else if (describe.length<10){
+                layer.msg('段落导语不能少于10个字');
+            }
+            else if (describe.length>100){
+                layer.msg('段落导语不能多于100个字');
+            }
+            single={
+                type:1,
+                img:'',
+                describe:describe,
+                link:'',
+                price:'',
+                goods_name:'',
+                shop_name:''
+
+            }
+        }
+        else if(addType.indexOf('产品卡')!=-1){
+            var describe=$('#sortable .IntSingle:eq('+i+') textarea').val();
+            if(describe==''){
+                layer.msg('请填写产品卡的描述');
+            }
+            else if (describe.length<10){
+                layer.msg('产品卡的描述不能少于10个字');
+            }
+            else if (describe.length>100){
+                layer.msg('产品卡的描述不能多于100个字');
+            }
+            single={
+                type:4,
+                img:$('#sortable .IntSingle:eq('+i+') .div_left img').attr('src'),
+                describe:$('#sortable .IntSingle:eq('+i+') .div_right textarea').val(),
+                link:$('#sortable .IntSingle:eq('+i+') a').attr('href'),
+                price:$('#sortable .IntSingle:eq('+i+') .price').text(),
+                goods_name:$('#sortable .IntSingle:eq('+i+') a').text(),
+                shop_name:$('#sortable .IntSingle:eq('+i+') .shop_name').text()
+            }
+        }
+        content.push(single);
+    }
+    var coverType=$("input[type='radio']:checked").parents('label').text().trim();
+    var cover=[];
+    if(coverType=='单图'){
+        coverType=1;
+        if(typeof($('.oneImgBox img').attr("src"))=="undefined"){
+            layer.msg('请设置封面');
+            return;
+        }
+        var coverSrc=$('.oneImgBox img').attr('src');
+        cover.push(coverSrc);
+    }
+    else{
+        coverType=2;
+        for (var i=0;i<3;i++){
+            if(typeof($('.threeImgBox .sinImgBox:eq('+i+') img').attr("src"))=="undefined"){
+                layer.msg('请设置封面');
+                return;
+            }
+            var coverSrc=$('.threeImgBox .sinImgBox:eq('+i+') img').attr('src');
+            cover.push(coverSrc);
+        }
+    }
+    if(typeof($('.supCover img').attr("src"))=="undefined"){
+        layer.msg('请设置补充封面');
+        return;
+    }
+    var supCover=$('.supCover img').attr('src');
+    var people='';
+    var peopleOne=$(".peopleOne option:selected").text();
+    var peopleTwo=$(".peopleTwo option:selected").text();
+    people+=peopleOne+','+peopleTwo;
+
+    var articleClass=[];
+    var classObj;
+    var articleType=$('.classParent').text();
+    var articleTypeWords=[];
+    var labelLen=$('.classChild label').length;
+    for (var i=0;i<labelLen;i++){
+        if($('.classChild label:eq('+i+') input').is(':checked')) {
+            var word=$('.classChild label:eq('+i+')').text();
+            articleTypeWords.push(word);
+        }
+    }
+    classObj={
+        articleType:articleType,
+        articleTypeWords:articleTypeWords
+    };
+    articleClass.push(classObj);
+
+    obj={
+        // 10是发布  0是存草稿
+        saveType:10,
+        title:title,
+        leads:leads,
+        content:content,
+        coverType:coverType,
+        cover:cover,
+        supCover:supCover,
+        people:people,
+        articleClass:articleClass
+    };
+    if(articleTypeWords.length==0){
+        layer.msg('请选择分类');
+        return;
+    }
+
+
+    console.log(obj);
+    localStorage.setItem('draft',JSON.stringify(obj))
+    var article_content='';
+    for (var i=0;i<len;i++){
+        if(content[i].type==2){
+            article_content+= '<div class="article_img">' +
+                                    '<img  class="tt-img" src="'+content[i].img+'" />' +
+                                '</div>' ;
+        }
+        else if(content[i].type==1){
+            article_content+= '<div class="article_des">' +
+                                    '<div class="tt-des">'+content[i].describe+'</div>' +
+                                '</div>' ;
+        }
+        else if(content[i].type==4){
+            article_content+= '<div class="article_card">' +
+                                    '<div class="tt-card">'+
+                                        '<div class="tt-card-left">'+
+                                            '<img  class="tt-img" src="'+content[i].img+'" />' +
+                                        '</div>' +
+                                        '<div class="tt-card-right">'+
+                                            '<a class="tt-link" href="'+content[i].link+'" target="_blank">'+content[i].goods_name+ '</a>' +
+                                            '<p class="tt-price" >￥'+content[i].price+ '</p>' +
+                                        '</div>' +
+                                    '</div>' +
+                                '</div>' ;
+        }
+
+    }
+
+    var img = '<div class="phone-preview">' +
+                    '<div class="preview-article-content">' +
+                        '<div class="tt-title">'+title+'</div>' +
+                        '<div class="tt-leads">'+leads+'</div>' +
+                        '<div class="tt-content">'+article_content+'</div>' +
+                    '</div>'+
+                '</div>' ;
+
+
+    layer.open({
+        type: 1,
+        title: false, //不显示标题
+        area:['auto','auto'],
+        shade: [0.8, '#393D49'],
+        shadeClose:true,
+
+        // area: [img.width + 'px', img.height+'px'],
+        content: img, //捕获的元素，注意：最好该指定的元素要存放在body最外层，否则可能被其它的相对元素所影响
+        cancel: function () {
+            //layer.msg('图片查看结束！', { time: 5000, icon: 6 });
+        }
+    });
+    // layui-layer
+    $('.phone-preview').parents('.layui-layer').css({'background-color':'transparent','box-shadow':'none'})
+})
+
+//发布
+$('.publishBtn').click(function () {
+    var obj;
+    var title=$('#titleInp').val();
+    var leads=$('.leads').val();
+    if(title==''){
+        layer.msg('请填写标题');
+        return;
+    }
+    else if (title.length<4){
+        layer.msg('标题不能少于4个字');
+        return;
+    }
+    else if (title.length>19){
+        layer.msg('标题不能多于19个字');
+        return;
+    }
+
+    if(leads==''){
+        layer.msg('请填写导语');
+        return;
+    }
+    else if (leads.length<10){
+        layer.msg('导语不能少于10个字');
+        return;
+    }
+    else if (leads.length>100){
+        layer.msg('导语不能多于100个字');
+        return;
+    }
+    var len=$('#sortable .IntSingle').length;
+    var content=[];
+    for (var i=0;i<len;i++){
+        var single;
+        var addType=$('#sortable .IntSingle:eq('+i+') .IntHead').text();
+        if(addType.indexOf('段落图片')!=-1){
+            single={
+                type:2,
+                img:$('#sortable .IntSingle:eq('+i+') .imgSingle').attr('src'),
+                describe:'',
+                link:'',
+                price:'',
+                goods_name:'',
+                shop_name:''
+
+            }
+        }
+        else if(addType.indexOf('段落导语')!=-1){
+            var describe=$('#sortable .IntSingle:eq('+i+') textarea').val();
+            if(describe==''){
+                layer.msg('请填写段落导语');
+            }
+            else if (describe.length<10){
+                layer.msg('段落导语不能少于10个字');
+            }
+            else if (describe.length>100){
+                layer.msg('段落导语不能多于100个字');
+            }
+            single={
+                type:1,
+                img:'',
+                describe:describe,
+                link:'',
+                price:'',
+                goods_name:'',
+                shop_name:''
+
+            }
+        }
+        else if(addType.indexOf('产品卡')!=-1){
+            var describe=$('#sortable .IntSingle:eq('+i+') textarea').val();
+            if(describe==''){
+                layer.msg('请填写产品卡的描述');
+            }
+            else if (describe.length<10){
+                layer.msg('产品卡的描述不能少于10个字');
+            }
+            else if (describe.length>100){
+                layer.msg('产品卡的描述不能多于100个字');
+            }
+            single={
+                type:4,
+                img:$('#sortable .IntSingle:eq('+i+') .div_left img').attr('src'),
+                describe:$('#sortable .IntSingle:eq('+i+') .div_right textarea').val(),
+                link:$('#sortable .IntSingle:eq('+i+') a').attr('href'),
+                price:$('#sortable .IntSingle:eq('+i+') .price').text(),
+                goods_name:$('#sortable .IntSingle:eq('+i+') a').text(),
+                shop_name:$('#sortable .IntSingle:eq('+i+') .shop_name').text()
+            }
+        }
+        content.push(single);
+    }
+    var coverType=$("input[type='radio']:checked").parents('label').text().trim();
+    var cover=[];
+    if(coverType=='单图'){
+        coverType=1;
+        if(typeof($('.oneImgBox img').attr("src"))=="undefined"){
+            layer.msg('请设置封面');
+            return;
+        }
+        var coverSrc=$('.oneImgBox img').attr('src');
+        cover.push(coverSrc);
+    }
+    else{
+        coverType=2;
+        for (var i=0;i<3;i++){
+            if(typeof($('.threeImgBox .sinImgBox:eq('+i+') img').attr("src"))=="undefined"){
+                layer.msg('请设置封面');
+                return;
+            }
+            var coverSrc=$('.threeImgBox .sinImgBox:eq('+i+') img').attr('src');
+            cover.push(coverSrc);
+        }
+    }
+    if(typeof($('.supCover img').attr("src"))=="undefined"){
+        layer.msg('请设置补充封面');
+        return;
+    }
+    var supCover=$('.supCover img').attr('src');
+    var people='';
+    var peopleOne=$(".peopleOne option:selected").text();
+    var peopleTwo=$(".peopleTwo option:selected").text();
+    people+=peopleOne+','+peopleTwo;
+
+    var articleClass=[];
+    var classObj;
+    var articleType=$('.classParent').text();
+    var articleTypeWords=[];
+    var labelLen=$('.classChild label').length;
+    for (var i=0;i<labelLen;i++){
+        if($('.classChild label:eq('+i+') input').is(':checked')) {
+            var word=$('.classChild label:eq('+i+')').text();
+            articleTypeWords.push(word);
+        }
+    }
+    classObj={
+        articleType:articleType,
+        articleTypeWords:articleTypeWords
+    };
+    articleClass.push(classObj);
+    if(articleTypeWords.length==0){
+        layer.msg('请选择分类');
+        return;
+    }
+    obj={
+        // 10是发布  0是存草稿
+        saveType:10,
+        title:title,
+        leads:leads,
+        content:content,
+        coverType:coverType,
+        cover:cover,
+        supCover:supCover,
+        people:people,
+        articleClass:articleClass
+    };
+
+    $.post(
+        '/admin/article/save_article',
+        {
+            data:JSON.stringify(obj),
+            _token :  $("input[name='_token']").val()
+        },
+        function(res) {
+            console.log(res);
+        }
+    )
+})
+
+//存草稿
+$('.draftBtn').click(function () {
+    var obj;
+    var title=$('#titleInp').val();
+    var leads=$('.leads').val();
+    if(title==''){
+        layer.msg('请填写标题');
+        return;
+    }
+    else if (title.length<4){
+        layer.msg('标题不能少于4个字');
+        return;
+    }
+    else if (title.length>19){
+        layer.msg('标题不能多于19个字');
+        return;
+    }
+
+    if(leads==''){
+        layer.msg('请填写导语');
+        return;
+    }
+    else if (leads.length<10){
+        layer.msg('导语不能少于10个字');
+        return;
+    }
+    else if (leads.length>100){
+        layer.msg('导语不能多于100个字');
+        return;
+    }
+    var len=$('#sortable .IntSingle').length;
+    var content=[];
+    for (var i=0;i<len;i++){
+        var single;
+        var addType=$('#sortable .IntSingle:eq('+i+') .IntHead').text();
+        if(addType.indexOf('段落图片')!=-1){
+            single={
+                type:2,
+                img:$('#sortable .IntSingle:eq('+i+') .imgSingle').attr('src'),
+                describe:'',
+                link:'',
+                price:'',
+                goods_name:'',
+                shop_name:''
+
+            }
+        }
+        else if(addType.indexOf('段落导语')!=-1){
+            var describe=$('#sortable .IntSingle:eq('+i+') textarea').val();
+            if(describe==''){
+                layer.msg('请填写段落导语');
+            }
+            else if (describe.length<10){
+                layer.msg('段落导语不能少于10个字');
+            }
+            else if (describe.length>100){
+                layer.msg('段落导语不能多于100个字');
+            }
+            single={
+                type:1,
+                img:'',
+                describe:describe,
+                link:'',
+                price:'',
+                goods_name:'',
+                shop_name:''
+
+            }
+        }
+        else if(addType.indexOf('产品卡')!=-1){
+            var describe=$('#sortable .IntSingle:eq('+i+') textarea').val();
+            if(describe==''){
+                layer.msg('请填写产品卡的描述');
+            }
+            else if (describe.length<10){
+                layer.msg('产品卡的描述不能少于10个字');
+            }
+            else if (describe.length>100){
+                layer.msg('产品卡的描述不能多于100个字');
+            }
+            single={
+                type:4,
+                img:$('#sortable .IntSingle:eq('+i+') .div_left img').attr('src'),
+                describe:$('#sortable .IntSingle:eq('+i+') .div_right textarea').val(),
+                link:$('#sortable .IntSingle:eq('+i+') a').attr('href'),
+                price:$('#sortable .IntSingle:eq('+i+') .price').text(),
+                goods_name:$('#sortable .IntSingle:eq('+i+') a').text(),
+                shop_name:$('#sortable .IntSingle:eq('+i+') .shop_name').text()
+            }
+        }
+        content.push(single);
+    }
+    var coverType=$("input[type='radio']:checked").parents('label').text().trim();
+    var cover=[];
+    if(coverType=='单图'){
+        coverType=1;
+        if(typeof($('.oneImgBox img').attr("src"))=="undefined"){
+            layer.msg('请设置封面');
+            return;
+        }
+        var coverSrc=$('.oneImgBox img').attr('src');
+        cover.push(coverSrc);
+    }
+    else{
+        coverType=2;
+        for (var i=0;i<3;i++){
+            if(typeof($('.threeImgBox .sinImgBox:eq('+i+') img').attr("src"))=="undefined"){
+                layer.msg('请设置封面');
+                return;
+            }
+            var coverSrc=$('.threeImgBox .sinImgBox:eq('+i+') img').attr('src');
+            cover.push(coverSrc);
+        }
+    }
+    if(typeof($('.supCover img').attr("src"))=="undefined"){
+        layer.msg('请设置补充封面');
+        return;
+    }
+    var supCover=$('.supCover img').attr('src');
+    var people='';
+    var peopleOne=$(".peopleOne option:selected").text();
+    var peopleTwo=$(".peopleTwo option:selected").text();
+    people+=peopleOne+','+peopleTwo;
+
+    var articleClass=[];
+    var classObj;
+    var articleType=$('.classParent').text();
+    var articleTypeWords=[];
+    var labelLen=$('.classChild label').length;
+    for (var i=0;i<labelLen;i++){
+        if($('.classChild label:eq('+i+') input').is(':checked')) {
+            var word=$('.classChild label:eq('+i+')').text();
+            articleTypeWords.push(word);
+        }
+    }
+    classObj={
+        articleType:articleType,
+        articleTypeWords:articleTypeWords
+    };
+    articleClass.push(classObj);
+    if(articleTypeWords.length==0){
+        layer.msg('请选择分类');
+        return;
+    }
+    obj={
+        // 10是发布  0是存草稿
+        saveType:0,
+        title:title,
+        leads:leads,
+        content:content,
+        coverType:coverType,
+        cover:cover,
+        supCover:supCover,
+        people:people,
+        articleClass:articleClass
+    };
+
+    $.post(
+        '/admin/article/save_article',
+        {
+            data:JSON.stringify(obj),
+            _token :  $("input[name='_token']").val()
+        },
+        function(res) {
+            console.log(res);
+        }
+    )
+})
+
+//标题提示
+$("#titleInp").keyup(function(){
+    var length = 19;
+    var content_len = $("#titleInp").val().length;
+    var in_len = length-content_len;
+    $(".title_tip").html(content_len+'/19');
+    if(content_len>length||content_len<4){
+        $(".title_tip").addClass('warning');
+    }
+    else if(content_len<=length){
+        $(".title_tip").removeClass('warning');
+    }
+});
+$("#titleInp").blur(function(){
+    var length = 19;
+    var content_len = $("#titleInp").val().length;
+    var in_len = length-content_len;
+    if(content_len!=''&&(content_len>length||content_len<4) ){
+        layer.msg('标题长度需要在4-19字之间')
+    }
+});
+
+//导语提示
+$(".leads").keyup(function(){
+    var length = 100;
+    var content_len = $(".leads").val().length;
+    var in_len = length-content_len;
+    $(".leads_tip").html(content_len+'/100');
+    if(content_len>length||content_len<10){
+        $(".leads_tip").addClass('warning');
+    }
+    else if(content_len<=length){
+        $(".leads_tip").removeClass('warning');
+    }
+});
+$(".leads").blur(function(){
+    var length = 100;
+    var content_len = $(".leads").val().length;
+    var in_len = length-content_len;
+    if(content_len!=''&&(content_len>length||content_len<10) ){
+        layer.msg('导语长度需要在10-100字之间')
+    }
+});
+
+
+
+
+
+
+
+

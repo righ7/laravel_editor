@@ -1,0 +1,215 @@
+<?php
+
+namespace App\Admin\Controllers\Portal;
+
+use App\Admin\Models\Article\DayArticleApi;
+use Encore\Admin\Form;
+use Encore\Admin\Grid;
+use Encore\Admin\Widgets\Table;
+use Encore\Admin\Widgets\Tab;
+use Encore\Admin\Layout\Row;
+use Encore\Admin\Facades\Admin;
+use Encore\Admin\Layout\Column;
+use Encore\Admin\Layout\Content;
+use App\Http\Controllers\Controller;
+use Encore\Admin\Controllers\ModelForm;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+
+class AdminArticleController extends Controller
+{
+    public function index()
+    {
+        Admin::disablePjax();
+        return Admin::content(function (Content $content) {
+
+            $content->header('发布图集');
+            $content->description('添加');
+
+            $content->body(view('portal.Pics.add_pics'));
+        });
+    }
+
+    //获取商品id
+    public function getSelectGoodsPreData(){
+        $data = request()->all();
+        $url=$data['link'];
+        $arr = explode("\n", $url);
+        $ids='';
+        foreach ($arr as $k=>$v){
+            $urlArr = explode("id=", $v);
+            $ids.=$urlArr[1].',';
+        }
+        $ids=$newstr = substr($ids,0,strlen($ids)-1);
+        return json_encode($ids);
+    }
+    //发布图集：插入选择的商品
+    public function getSelectGoodsWaitData(){
+        $data = request()->all();
+        $strSelectProductId=$data['select_product_id'];
+        if(!empty($strSelectProductId)){
+            $arrData = $this->getGoodsDescribeById($strSelectProductId);
+
+            $arrReturn = array();
+            $arrEntry = array();
+            foreach ($arrData->data as $key => $objEntry) {
+                //$objEntry = $arrData->data;
+                $arrEntry['main_describe'] = $objEntry->main_description[0];
+                $arrEntry['sub_describe'] = $objEntry->vice_description[0];
+                $arrEntry['main_describe_recommend'] = $objEntry->main_description[1];
+                $arrEntry['sub_describe_recommend'] = $objEntry->vice_description[1];
+                $arrEntry['product_id'] = $objEntry->goods_id;
+                $arrEntry['is_exact'] = $objEntry->is_exact;
+                foreach ($objEntry->img as $k => $arrEntryImg) {
+                    $arrEntry['images'][$k] = $arrEntryImg;
+                }
+                $arrReturn[$key] = $arrEntry;
+            }
+        }
+
+        if (!empty($strSelectProductId)) {
+            $arrTitleData = $this->getGoodsTitlesById($strSelectProductId);
+
+            $arrTitleReturn = array();
+
+            foreach ($arrTitleData->data as $key => $objEntry) {
+                $arrTitleEntry = array();
+
+                $arrTitleEntry['title'] = $objEntry[0];
+                $arrTitleEntry['title_recommend'] = $objEntry[1];
+                $arrTitleEntry['product_id'] = $key;
+                $title_recommend_more = array();
+                foreach ($objEntry as $k => $arrEntrys) {
+                    if($k>=2){
+                        $title_recommend_more[$k] = $arrEntrys;
+                    }
+                }
+                $arrTitleEntry['title_recommend_more'] = array_values($title_recommend_more);
+                $arrTitleReturn[$key] = $arrTitleEntry;
+            }
+            if(empty($arrTitleReturn)){
+                $arrTitleReturn[]['title_recommend']='0';
+            }
+
+
+        }
+
+        $return = array(
+            'CODE' => 'ok',
+            'DATA' => $arrReturn,
+            'waitTitle'=>$arrTitleReturn
+        );
+        return json_encode($return);
+    }
+
+    //预览
+    public function setArticleStatus(){
+        return view('portal.Pics.preview');
+    }
+    //存草稿
+    public function saveArticlePics(Request $request){
+        $data = $request->params;
+        $goodsArr=$data['goodsArr'];
+        $title=$data['articleTitle'];
+        //用户id
+        $user_id=Admin::user()->id;
+
+        $arrArticleData['user_id']          =  $user_id;
+        $arrArticleData['article_number']  =  date('YmdHis').rand(1000, 9999);
+        $arrArticleData['title']             =  $title;
+        $arrArticleData['type']              =  1;   //图集
+        $arrArticleData['plan_online_time'] = time();
+        $arrArticleData['article_type']    = 0;
+        $arrArticleData['status']           =  2;   //草稿   C('ARTICLE_STATUS.DRAFT');
+        $arrArticleData['create_time']     =   Carbon::now()->timestamp;
+        $arrArticleData['update_time']     =   Carbon::now()->timestamp;
+
+
+        //存文章表，状态为：草稿
+       $article_id=DB::table("article")->insertGetId($arrArticleData);
+//       var_dump($article_id);exit;
+       if(!empty($article_id)){
+           //存描述
+           $strOrderBy = 1;
+           foreach ($goodsArr as $k=>$v){
+               if(!empty($v['goodsDatas']['main_describe'])){
+
+                   $arrArticlePics[0]['image']       =  $v['goodsDatas']['main_pic'];
+                   $arrArticlePics[0]['describe']    =  $v['goodsDatas']['main_describe'];
+                   $arrArticlePics[0]['image_type'] =  1;//1 主图 2副图
+                   $arrArticlePics[0]['title']       =   $v['goodsDatas']['title_recommend'];
+                   $arrArticlePics[0]['user_id']     =  $user_id;
+                   $arrArticlePics[0]['article_id'] =  $article_id;
+                   $arrArticlePics[0]['goods_id']    =  $v['id'];
+                   $arrArticlePics[0]['product_id']  =  $v['goods_id'] ;
+                   $arrArticlePics[0]['order_by']   =  $strOrderBy;
+               }
+
+               if(!empty($v['goodsDatas']['sub_describe'])){
+                   $arrArticlePics[1]['image']       =   $v['goodsDatas']['sub_pic'];
+                   $arrArticlePics[1]['describe']    =  $v['goodsDatas']['sub_describe'];
+                   $arrArticlePics[1]['image_type'] =  2;//1 主图 2副图
+                   $arrArticlePics[1]['title'] = '';
+                   $arrArticlePics[1]['user_id']    =  $user_id;
+                   $arrArticlePics[1]['article_id'] =  $article_id;
+                   $arrArticlePics[1]['goods_id']   =   $v['id'];
+                   $arrArticlePics[1]['product_id']  = $v['goods_id'] ;
+                   $arrArticlePics[1]['order_by']   =  $strOrderBy;
+               }
+               DB::table("article_pics")->insert($arrArticlePics);
+               $strOrderBy++;
+           }
+       }
+        return json_encode($article_id);
+
+    }
+
+    //敏感词校验
+    public function sensitiveWord(Request $request)
+    {
+        $type = $request->type;
+        $datas= DB::table('article_sensitive_word')->where([
+                            ['keywords_type',0],
+                            ['type',$type]
+                        ])->select('keywords')->get()->toArray();
+        foreach ($datas as $k=>$v){
+            $data[]=$v->keywords;
+        }
+//        $datas=DB::select("select keywords from article_sensitive_word where type=$type and keywords_type=0 ");
+        return json_encode($data);
+    }
+
+
+    //获取描述
+    public function getGoodsDescribeById($strSelectProductId)
+    {
+
+        if (empty($strSelectProductId)) {
+            return array();
+        }
+        $strGetUrl ="https://baseinfo.youdnr.com/api/info/getgoodsinfo?";
+        // $strGetUrl .= 'goods_ids='.$strSelectProductId;
+        $strGetUrl .= 'goods_ids=' .$strSelectProductId.'&fuzzy_des=1&type_level=3&tool_type=0&des_count=10';
+        $arrGoodsData = file_get_contents($strGetUrl);
+        $arrData = json_decode($arrGoodsData);
+        return !empty($arrData) ? $arrData : array();
+
+    }
+
+    //公共库获取标题
+    public function getGoodsTitlesById($strSelectProductId)
+    {
+
+        if (empty($strSelectProductId)) {
+            return array();
+        }
+        $strGetUrl = 'http://baseinfo.youdnr.com/api/goods/get_goods_article_title?';
+        // $strGetUrl .= 'goods_ids='.$strSelectProductId;
+        $strGetUrl .= 'goods_id=' . $strSelectProductId;
+        $arrGoodsData = file_get_contents($strGetUrl);
+        $arrData = json_decode($arrGoodsData);
+        return !empty($arrData) ? $arrData : array();
+
+    }
+}

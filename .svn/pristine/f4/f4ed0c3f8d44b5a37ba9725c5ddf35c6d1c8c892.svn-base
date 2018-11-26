@@ -1,0 +1,363 @@
+/**
+ * Created by Administrator on 2018-09-13.
+ */
+
+$('#get_goods_data').click(function () {
+    $('#goods_url_data .request-tip').show();
+    if($('#img_panel')){
+        $('#img_panel').hide();
+    }
+    if($('#goods_data')){
+        $('#goods_data').hide();
+    }
+
+    var url = $('#tb_goods_link').val();
+
+    if(url == "" ){
+        layer.alert('请输入url进行查询!');
+        return;
+    }
+    else{
+        $.post(
+            '/admin/article/get_goods_data',
+            {
+                url:url,
+                _token :  $("input[name='_token']").val()
+            },
+            function(res) {
+                console.log(res);
+                $('#img_box').empty();
+                $('#goods_data_box').empty();
+                var status = res.status;
+                var msg = res.msg;
+                var data = res.data;
+                $('#goods_url_data .request-tip').hide();
+                if(status == 0){
+                    if(data.imgs.length>0){
+                        $('#img_panel').show();
+
+                        var img_ul = '<ul class="img_ul">';
+                        for (var i=0;i<data.imgs.length;i++){
+                            if(i == 0){
+                                img_ul += '<li class="img_active"><img src="'+data.imgs[i]+'" class="tb_goods_imgs" /></li>'
+                            }
+                            else{
+                                img_ul += '<li><img src="'+data.imgs[i]+'" class="tb_goods_imgs img-rounded" alt="Cinque Terre"/></li>'
+                            }
+                        }
+                        img_ul +='</ul>';
+                        $('#img_box').html(img_ul);
+                    }
+
+                    if(data.open_id != ""){
+                        $('#goods_data').show();
+                        var data_html = "";
+
+                        data_html += '<div class="box-body">';
+
+                        data_html += '<div class="box-body-left">';
+                        data_html += '<div class="goods_img_box">';
+                        data_html += '<img src="'+data.pic_url+'" id="now_goods_img"/>';
+                        data_html += '<span class="cut-img-tip">裁剪图片</span>';
+                        data_html += '</div>';
+                        data_html += '</div>';
+                        data_html += '<div class="box-body-right">';
+                        data_html += '<div class="goods_data_datail">';
+                        data_html += '<div class="datail_box">';
+                        data_html += '<span class="datail_title">产品名称：</span>';
+                        data_html += '<a class="goods_title" href="'+url+'" target="_blank"><span id="title">'+data.title+'</span></a>';
+                        data_html += '</div>';
+                        data_html += '<div class="datail_box">';
+                        data_html += '<span class="datail_title">价钱：</span><span id="price">'+data.price+'</span>';
+                        data_html += '</div>';
+                        data_html += '<div class="datail_box">';
+                        data_html += '<span class="datail_title">原价：</span><span id="reserve_price">'+data.reserve_price+'</span>';
+                        data_html += '</div>';
+                        data_html += '<div class="datail_box">';
+                        data_html += '<span class="datail_title">店铺名称：</span><span id="shop_name">'+data.shop_name+'</span>';
+                        data_html += '</div>';
+                        data_html += '</div>';
+                        data_html += '</div>';
+                        data_html += '</div>';
+
+                        $('#goods_data_box').html(data_html);
+                    }
+
+                }
+                else{
+                    $('#img_panel').hide();
+                    layer.alert(msg);
+                }
+            }
+        );
+    }
+});
+
+
+$(document).on('click','.tb_goods_imgs',function () {
+    $('.img_ul li').removeClass('img_active');
+
+    $(this).parent().addClass('img_active');
+    var path = $(this)[0].src;
+    $('#now_goods_img').attr('src',path);
+});
+
+
+$(document).on('dblclick','.tb_goods_imgs',function () {
+    var path = $(this)[0].src;
+    var img = "<img src='" + path + "' style='height:733px'/>";
+
+
+    layer.open({
+        type: 1,
+        title: false, //不显示标题
+        area:['auto','auto'],
+        shade: [0.8, '#393D49'],
+        shadeClose:true,
+
+        // area: [img.width + 'px', img.height+'px'],
+        content: img, //捕获的元素，注意：最好该指定的元素要存放在body最外层，否则可能被其它的相对元素所影响
+        cancel: function () {
+            //layer.msg('图片查看结束！', { time: 5000, icon: 6 });
+        }
+    });
+
+});
+
+
+
+function callbackdata() {
+    var data = {};
+
+    var title = $('#title').html();
+    var price = $('#price').html();
+    var reserve_price = $('#reserve_price').html();
+    var shop_name = $('#shop_name').html();
+    var url = $('.goods_title').attr('href');
+    var img = $('#now_goods_img')[0].src;
+    data['title'] = title;
+    data['price'] = price;
+    data['reserve_price'] = reserve_price;
+    data['shop_name'] = shop_name;
+    data['url'] = url;
+    data['img'] = img;
+    return data;
+}
+
+// 裁剪图片
+$(document).on('click','.goods_img_box .cut-img-tip',function () {
+    var src=$(this).siblings('img').attr('src');
+    var cutModel='<div class="cutModel">\n' +
+        '\t\t\t<button type="button" class="btn btn-primary selImgBtn">选择图片</button>\n' +
+        '\t\t\t\t<button type="button" class="btn btn-success sureImgBtn">确定</button>\n' +
+        '\t\t\t\t<button type="button" class="btn btn-warning closeImgBtn">取消</button>\n' +
+        '\t\t\t<div class="head">\n' +
+        '\t\t\t\t<img src='+src+'  id="targetImg"/>\n' +
+        '\t\t\t\t<input type="file" id="fileImg" style="display: none;"/>\n' +
+        '\t\t\t</div>\n' +
+        '\n' +
+        '\t\t\t<div id="preview-paneImg">\n' +
+        '\t\t\t\t<div class="preview-container">\n' +
+        '\t\t\t\t\t<img src="" class="jcrop-preview" alt="Preview"  id="PreviewImg"/>\n' +
+        '\t\t\t\t</div>\n' +
+        '\t\t\t</div>\n' +
+        '<canvas id="myCanImg" width="733" height="733"></canvas>' +
+        // '\t\t\t<div class="footer">\n' +
+        // '\t\t\t\t<button type="button" class="btn btn-success sureImgBtn">确定</button>\n' +
+        // '\t\t\t\t<button type="button" class="btn btn-warning closeImgBtn">取消</button>\n' +
+        // '\t\t\t</div>\n' +
+        '\t\t</div>';
+    $('html body').append(cutModel);
+    $('.cutModel #targetImg').attr('crossOrigin', 'anonymous');
+    // 定义一些使用的变量
+    var jcrop_api,//jcrop对象
+        boundx,//图片实际显示宽度
+        boundy,//图片实际显示高度
+        realWidth,// 真实图片宽度
+        realHeight, //真实图片高度
+        // 使用的jquery对象
+        $targetImg = $('#targetImg'),
+        $previewImg = $('#preview-paneImg'),
+        $pcntImg = $('#preview-paneImg .preview-container'),
+        $pimgImg = $('#preview-paneImg .preview-container img'),
+        xsize = $pcntImg.width(),
+        ysize = $pcntImg.height();
+    $('.cutModel .selImgBtn').click(function () {
+        openBrowseImg()
+    });
+    $('.cutModel .sureImgBtn').click(function () {
+        // uploadFile()
+        var data=document.getElementById("myCanImg").toDataURL("image/jpeg");
+        $('.goods_img_box img').attr('src',data);
+        $('.cutModel').remove();
+    });
+    $('.cutModel .closeImgBtn').click(function () {
+        $('.cutModel').remove();
+    });
+    preImgImg(src);
+
+    $('.cutModel #fileImg').change(function(){
+        changeFileImg()
+    });
+
+    //1.
+    function openBrowseImg(){
+        var ie=navigator.appName=="Microsoft Internet Explorer" ? true : false;
+        if(ie){
+            document.getElementById("fileImg").click();
+        }else{
+            var a=document.createEvent("MouseEvents");
+            a.initEvent("click", true, true);
+            document.getElementById("fileImg").dispatchEvent(a);
+        }
+    }
+
+    //2、从 file 域获取 本地图片 url
+    function getFileUrlImg(sourceId) {
+        var url;
+        if (navigator.userAgent.indexOf("MSIE")>=1) { // IE
+            url = document.getElementById(sourceId).value;
+        } else if(navigator.userAgent.indexOf("Firefox")>0) { // Firefox
+            url = window.URL.createObjectURL(document.getElementById(sourceId).files.item(0));
+        } else if(navigator.userAgent.indexOf("Chrome")>0) { // Chrome
+            url = window.URL.createObjectURL(document.getElementById(sourceId).files.item(0));
+        } else if(navigator.userAgent.indexOf("Safari")>0) { // Chrome
+            url = window.URL.createObjectURL(document.getElementById(sourceId).files.item(0));
+        }
+        return url;
+    }
+    //选择文件事件
+    function changeFileImg() {
+        var url = getFileUrlImg("fileImg");//根据id获取文件路径
+        preImgImg(url);
+        return false;
+    }
+
+    //3、将本地图片 显示到浏览器上
+    function preImgImg(url) {
+
+        console.log('url===' + url);
+        //图片裁剪逻辑
+        if(jcrop_api)//判断jcrop_api是否被初始化过
+        {
+            jcrop_api.destroy();
+        }
+        //初始化预览div内容
+        initPreviewImg();
+        var p = document.getElementById('PreviewImg');
+        p.src = url;
+
+        //初始化图片
+        initTargetImg();
+        var image = document.getElementById('targetImg');
+        image.onload=function(){//图片加载是一个异步的过程
+            //获取图片文件真实宽度和大小
+            var img = new Image();
+            img.onload=function(){
+                realWidth = img.width;
+                realHeight = img.height;
+
+                //获取图片真实高度之后
+                initJcropImg();//初始化Jcrop插件
+                initCanvasImg();//初始化Canvas内容
+            };
+            img.src = url;
+        };
+        image.src = url;
+    }
+
+    //初始化Jcrop插件
+    function initJcropImg(){
+        console.log('init',[xsize,ysize]);
+        $targetImg.removeAttr("style");//清空上一次初始化设置的样式
+        $targetImg.Jcrop({
+            onChange: updatePreviewImg,
+            onSelect: updatePreviewImg,
+            aspectRatio: 733 / 733
+        },function(){
+            //初始化后回调函数
+            // 获取图片实际显示的大小
+            var bounds = this.getBounds();
+            boundx = bounds[0];//图片实际显示宽度
+            boundy = bounds[1];//图片实际显示高度
+
+            // 保存jcrop_api变量
+            jcrop_api = this;
+
+        });
+    }
+
+
+    //更新显示预览内容
+    function updatePreviewImg(c){
+        if (parseInt(c.w) > 0)
+        {
+            var rx = xsize / c.w;
+            var ry = ysize / c.h;
+
+            $pimgImg.css({
+                maxWidth:  Math.round(rx * boundx) + 'px',
+                maxHeight: Math.round(ry * boundy) + 'px',
+                width: Math.round(rx * boundx) + 'px',
+                height: Math.round(ry * boundy) + 'px',
+                marginLeft: '-' + Math.round(rx * c.x) + 'px',
+                marginTop: '-' + Math.round(ry * c.y) + 'px'
+            });
+
+            //更新canvas画板内容
+            var img=document.getElementById("targetImg");
+            var ct=document.getElementById("myCanImg");
+            var ctx=ct.getContext("2d");
+            //清空画板
+            ctx.clearRect(0,0, ct.width, ct.height);
+            //.drawImage(图像对象,原图像截取的起始X坐标,原图像截取的起始Y坐标,原图像截取的宽度,原图像截取的高度，绘制图像的起始X坐标,绘制图像的起始Y坐标,绘制图像所需要的宽度,绘制图像所需要的高度);
+            ctx.drawImage(img, c.x/boundx * realWidth,c.y/boundy * realHeight, c.w/boundx * realWidth, c.h/boundy * realHeight,0,0, ct.width, ct.height);
+        }
+    }
+
+    //初始化预览div内容
+    function initTargetImg(){
+        $targetImg.removeAttr("style");//清空上一次初始化设置的样式
+        $targetImg.css({
+            maxWidth:  '100%',
+            maxHeight: '100%'
+        });
+    }
+    //初始化预览div内容
+    function initPreviewImg(){
+        $pimgImg.removeAttr("style");//清空上一次初始化设置的样式
+        $pimgImg.css({
+            maxWidth:  xsize + 'px',
+            maxHeight: ysize + 'px'
+        });
+    }
+
+    //初始化canvas画板内容
+    function initCanvasImg(){
+        //更新canvas画板内容
+        var img= document.getElementById("targetImg");
+        var ct= document.getElementById("myCanImg");
+        var ctx = ct.getContext("2d");
+
+        var myCanWidth = $('#myCanImg').width();
+        var myCanHeight = $('#myCanImg').height();
+
+        //清空画板
+        ctx.clearRect(0,0, ct.width, ct.height);
+
+        //.drawImage(图像对象,原图像截取的起始X坐标,原图像截取的起始Y坐标,原图像截取的宽度,原图像截取的高度，绘制图像的起始X坐标,绘制图像的起始Y坐标,绘制图像所需要的宽度,绘制图像所需要的高度);
+        var dWidth = realWidth;//绘制实际宽度
+        var dHeight = realHeight;//绘制实际高度
+        if(dWidth > myCanWidth)
+        {
+            dHeight = myCanWidth / dWidth *  dHeight;
+            dWidth = myCanWidth;
+        }
+        if(dHeight > myCanHeight)
+        {
+            dWidth = myCanHeight / dHeight * dWidth ;
+            dHeight = myCanHeight;
+        }
+        ctx.drawImage(img,0,0, realWidth, realHeight, 0,0,  dWidth, dHeight);
+    }
+})

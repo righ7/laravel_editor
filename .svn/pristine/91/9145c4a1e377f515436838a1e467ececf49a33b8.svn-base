@@ -1,0 +1,12 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: Administrator
+ * Date: 2018-09-06
+ * Time: 下午 5:24
+ */
+
+
+return [
+    'user_company' => 'admin_user_company',
+];

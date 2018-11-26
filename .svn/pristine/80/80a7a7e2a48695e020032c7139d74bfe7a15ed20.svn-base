@@ -1,0 +1,76 @@
+/**
+ * Created by Administrator on 2018-09-13.
+ */
+
+// $('.addBabyBtn').click(function () {
+$(document).on('click','.addBabyBtn',function () {
+    var url = '/admin/toutiao/get_goods_data_view';
+    layer.open({
+        type: 2,
+        title: "添加淘宝商品", //不显示标题
+        area:['80%','100%'],
+        shade: [0.8, '#393D49'],
+        shadeClose:false,
+        // area: [img.width + 'px', img.height+'px'],
+        content: url, //捕获的元素，注意：最好该指定的元素要存放在body最外层，否则可能被其它的相对元素所影响
+        closeBtn:0,
+        //右下角按钮文本和数目控制
+        btn: ['确认','取消'],
+        yes:function(index, layero){
+            var res = window["layui-layer-iframe" + index].callbackdata();
+            var intHtml='<div class="IntSingle">' +
+                '<div class="ul_img_box" style="display: none">'+res.img_box+'</div>'+
+                '<p class="IntHead">产品卡<span class="delBtn">X</span></p>' +
+                '<div style="width: 100%">' +
+                    '<div class="div_left"><img src="'+res.img+'" class="goods_img"/><span class="change_img">更换图片</span></div>'+
+                    '<div class="div_center">' +
+                    '<div><a href="'+res.url+'" target="_blank"><input type="hidden" class="goods_url" value="'+res.url+'"/><span class="title">'+res.title+'</span></a></div>'+
+                    '<div><span>￥</span><span class="price">'+res.price+'</span></div>'+
+                    '<div><span class="shop_name">'+res.shop_name+'</span></div>'+
+                    '</div>'+
+                    '<div class="div_right">' +
+                        '<textarea class="goods_des" rows="4" placeholder="请输入10-100字导语"></textarea>' +
+                        '<span class="card_tip">0/100</span>' +
+                    '</div>'+
+                '</div>'+
+                '</div>';
+
+            $('#sortable').append(intHtml);
+            var goodsImgSrc=$('.goods_img:last').attr('src');
+            if(goodsImgSrc.indexOf('http')!=-1){
+                getUrlBase64(goodsImgSrc, 'jpeg', function (base64) {
+                    $('.goods_img:last').attr('src',base64);
+                });
+            }
+            var width=$('.IntSingle .goods_img').width();
+            $('.IntSingle .change_img').css({'width':width+'px'});
+
+            // $('.IntSingle .change_img').click(function () {
+
+
+            layer.close(index);
+            if($('#isLocation').is(':checked')) {
+                var len=$('#sortable .IntSingle').length;
+                $('#sortable .IntSingle:last').attr('id',len);
+                $("html,body").animate({scrollTop: $("#"+len).offset().top}, 500);
+            }
+
+
+            function getUrlBase64(url, ext, callback) {
+                var canvas = document.createElement("canvas");   //创建canvas DOM元素
+                var ctx = canvas.getContext("2d");
+                var img = new Image;
+                img.crossOrigin = 'Anonymous';
+                img.src = url;
+                img.onload = function () {
+                    canvas.height = 733; //指定画板的高度,自定义
+                    canvas.width = 733; //指定画板的宽度，自定义
+                    ctx.drawImage(img, 0, 0, 733, 733); //参数可自定义
+                    var dataURL = canvas.toDataURL("image/" + ext);
+                    callback.call(this, dataURL); //回掉函数获取Base64编码
+                    canvas = null;
+                };
+            }
+        }
+    });
+});

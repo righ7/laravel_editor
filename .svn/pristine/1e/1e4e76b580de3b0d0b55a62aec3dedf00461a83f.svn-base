@@ -1,0 +1,146 @@
+<?php
+
+namespace App\Admin\Controllers\Article;
+
+use App\Admin\Models\Article\DayArticleApi;
+use App\Admin\Models\BaseInfo\ArticleAll;
+use App\Admin\Repositories\Base\ArticleAllRepository;
+use Illuminate\Http\Request;
+use Encore\Admin\Form;
+use Encore\Admin\Grid;
+use Encore\Admin\Widgets\Table;
+use Encore\Admin\Widgets\Tab;
+use Encore\Admin\Layout\Row;
+use Encore\Admin\Facades\Admin;
+use Encore\Admin\Layout\Column;
+use Encore\Admin\Layout\Content;
+use App\Http\Controllers\Controller;
+use Encore\Admin\Controllers\ModelForm;
+use Illuminate\Support\Facades\DB;
+
+class ConcernGodsController extends Controller
+{
+    //use ModelForm;
+
+    /**
+     * Index interface.
+     *
+     * @return Content
+     */
+    protected $ArticleAllRepository;
+    public function __construct(ArticleAllRepository $ArticleAllRepository)
+    {
+        parent::__construct();
+        $this->ArticleAllRepository = $ArticleAllRepository;
+    }
+
+    public function index()
+    {
+        Admin::disablePjax();
+        return Admin::content(function (Content $content) {
+            $content->header('关注达人');
+            $content->description(' ');
+            $content->body(view('article.TemaiArticle.concern_gods'));
+        });
+    }
+
+    public function getGodsData(){
+        try{
+            $code = 0;
+            $errMsg = '';
+            $user_id=Admin::user()->id;
+            if ($user_id){
+                $data=DB::table('concern_gods')->where('user_id','=',$user_id)->get()->toArray();
+            }
+        }catch (\Exception $e) {
+            $code = 1;
+            $errMsg = $e->getMessage();
+        } finally {
+            return response()->json([
+                'code'   => $code,
+                'errMsg' => $errMsg,
+                'data' => $data??'',
+            ]);
+        }
+    }
+    public function cancelConcern(Request $request){
+        try{
+            $code = 0;
+            $errMsg = '';
+            $author=$request['author'];
+            $user_id=Admin::user()->id;
+            if ($user_id){
+                DB::table('concern_gods')
+                    ->where([
+                        ['user_id','=',$user_id],
+                        ['author_temai_id','=',$author]
+                    ])
+                    ->delete();
+            }
+        }catch (\Exception $e) {
+            $code = 1;
+            $errMsg = $e->getMessage();
+        } finally {
+            return response()->json([
+                'code'   => $code,
+                'errMsg' => $errMsg,
+            ]);
+        }
+    }
+
+    public function concernGod(Request $request){
+        try{
+            $code = 0;
+            $errMsg = '';
+            $name            = $request['name'] ?? '';
+            $describe        = $request['describe'] ?? '';
+            $author_id       = $request['author_id'] ?? '';
+            $user_id=Admin::user()->id;
+            if ($name and $describe and $author_id and $user_id){
+                DB::table('concern_gods')->insert([
+                    ['user_id'          => $user_id,
+                        'remark'           => $name,
+                        'describe'         => $describe,
+                        'author_temai_id'  => $author_id,
+                        'creat_time'       => date("Y-m-d H:i:s"),]
+                ]);
+            }
+        }catch (\Exception $e) {
+            $code = 1;
+            $errMsg = $e->getMessage();
+        } finally {
+            return response()->json([
+                'code'   => $code,
+                'errMsg' => $errMsg,
+            ]);
+        }
+
+    }
+
+    public function checkConcerned(Request $request){
+        try{
+            $code = 0;
+            $errMsg = '';
+            $author_id       = $request['author_id'] ?? '';
+            $user_id=Admin::user()->id;
+            if ($author_id and $user_id){
+                $res=DB::table('concern_gods')->where([
+                    ['user_id', '=', $user_id],
+                    ['author_temai_id', '=', $author_id],
+                ])->get()->toArray();
+                if (!empty($res)){
+                    $code = 1;
+                }
+            }
+        }catch (\Exception $e) {
+            $code = 2;
+            $errMsg = $e->getMessage();
+        } finally {
+            return response()->json([
+                'code'   => $code,
+                'errMsg' => $errMsg,
+            ]);
+        }
+
+    }
+}

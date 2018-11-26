@@ -1,0 +1,6 @@
+﻿/***一行两个或者三个 Start**/
+.two_ul_parent_div{width: 100%;}
+.two_ul{list-style:none; margin:0 auto; width: 100%;}
+.two_ul .two_li{float: left; width: 50%;}
+.two_ul .three_li{float: left; width: 33.33%;}
+/***一行两个或者三个 End**/

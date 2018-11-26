@@ -1,0 +1,157 @@
+<?php
+
+namespace App\Admin\Controllers\GoodsCard;
+
+use Illuminate\Http\Request;
+use App\Admin\Models\GoodsCard\GoodsGroup;
+use App\Admin\Models\GoodsCard\GoodsGroupDetail;
+use App\Http\Controllers\Controller;
+use Encore\Admin\Facades\Admin;
+use Illuminate\Support\Facades\DB;
+
+class GoodsGroupController extends Controller
+{
+    /**
+     * 获取用户商品分组
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getGoodsGroup(Request $request)
+    {
+        $limit = $request->limit ?? 78;
+        $page_index = $request->page_index ?? 1;
+
+        $user_id = Admin::user()->id;
+
+        $groups = GoodsGroup::with('details')
+            ->where('user_id',$user_id)
+            ->orWhere('permission',1)
+            ->orderByRaw('order_num desc, create_time desc')
+            ->get();
+        foreach ($groups as $group) {
+            $group->goods_id_arr = $group->details()->skip(($page_index-1) * $limit)->take($limit)->pluck('goods_id');
+            $group->goods_amount = $group->details()->count();
+            $group->is_disable = $user_id == $group->user_id ? 0 : 1;
+        }
+        return response()->json($groups);
+    }
+
+    /**
+     * 获取分组内的商品ID
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getGoodsGroupDetail(Request $request)
+    {
+        $limit = $request->limit ?? 78;
+        $page_index = $request->page_index ?? 1;
+        $group_id = $request->group_id ?? 0;
+
+        $datas = GoodsGroupDetail::where('goods_group_id',$group_id)
+            ->skip(($page_index -1) * $limit)
+            ->take($limit)
+            ->pluck('goods_id');
+        return response()->json($datas);
+    }
+
+    /**
+     * 增删改商品分组
+     * @param Request $request
+     * @return bool|string
+     * @throws \Exception
+     */
+    public function curdGoodsGroup(Request $request)
+    {
+        $id = $request->id ?? '';                               // 分组ID
+        $curd = $request->curd ?? '';                           // 操作序号
+        $permission = $request->permission ?? -1;               // 分组权限
+        $gruop_name = $request->group_name ?? '';               // 分组名
+        $order_num = $request->order_num ?? 999;                // 分组排序
+        $goods_group_name = $request->goods_group_name ?? '';   // 商品分组名
+
+        $user_id = Admin::user()->id;
+
+        switch ($curd){
+            case 1: // 增
+                $group = new GoodsGroup();
+                $group->user_id = $user_id;
+                $group->name = $goods_group_name;
+                $group->save();
+                return '创建成功';
+            case 2: // 删
+                $sign = GoodsGroup::where('id',$id)->where('user_id',$user_id)->delete();
+                if($sign){
+                    GoodsGroupDetail::where("goods_group_id",$id)->delete();
+                }
+                return '删除分组成功';
+            case 3: // 改
+                $group = GoodsGroup::where('id',$id)->where('user_id',$user_id)->first();
+                if($permission != -1)
+                    $group->permission = $permission;
+                if(!empty($gruop_name))
+                    $group->name = $gruop_name;
+                if(!empty($order_num))
+                    $group->order_num = $order_num;
+                $group->save();
+                return '修改成功';
+            default:
+                return '未知操作';
+        }
+    }
+
+    /**
+     * 增删改分组内的商品
+     * @param Request $request
+     * @return bool|\Illuminate\Http\JsonResponse|string
+     * @throws \Exception
+     */
+    public function curdGoodsGroupDetail(Request $request)
+    {
+        $curd = $request->curd ?? '';
+        $goods_id_arr = $request->goods_id_arr ?? '';
+        $goods_group_id = $request->goods_group_id ?? '';
+
+        $user_id = Admin::user()->id;
+
+        switch($curd) {
+            case 1: // 添加商品到分组
+                if(empty($goods_id_arr)){
+                    return '请选择商品';
+                }
+                foreach($goods_id_arr as $item){
+                    $sign = GoodsGroupDetail::where('goods_id',$item)->where('goods_group_id',$goods_group_id)->count();
+                    if(!$sign){
+                        GoodsGroupDetail::create([
+                            'user_id' => $user_id,
+                            'goods_group_id' => $goods_group_id,
+                            'goods_id' => $item,
+                        ]);
+                    }
+                }
+                return '添加商品成功';
+            case 2: // 删除商品，返回新的商品分组
+                if(empty($goods_group_id) || empty($goods_id_arr)){
+                    return false;
+                }
+                GoodsGroupDetail::where('goods_group_id', $goods_group_id)->whereIn('goods_id',$goods_id_arr)->delete();
+                $goods_id_arr = GoodsGroupDetail::where('goods_group_id',$goods_group_id)->pluck('goods_id');
+                return response()->json($goods_id_arr);
+        }
+    }
+
+    public function findGoodsInGroup(Request $request)
+    {
+        $goods_id = $request->goods_id;
+        $user_id = Admin::user()->id;
+        $goodsIdArr = [];
+        $goodsGroupArr = DB::table(DB::raw('goods_group_detail as a'))
+            ->leftJoin(DB::raw('goods_group as b'),'a.goods_group_id', '=', 'b.id')
+            ->where('a.goods_id',$goods_id)
+            ->where(function($query) use ($user_id){
+                $query->where('b.permission',1)->orWhere('b.user_id',$user_id);
+            })->pluck('b.id');
+        if(!empty($goodsGroupArr))
+            $goodsIdArr = GoodsGroupDetail::whereIn('goods_group_id',$goodsGroupArr)->pluck('goods_id');
+        return response()->json($goodsIdArr);
+    }
+}

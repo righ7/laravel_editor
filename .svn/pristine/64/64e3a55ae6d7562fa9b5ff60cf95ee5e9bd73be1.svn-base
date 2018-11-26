@@ -1,0 +1,111 @@
+<?php
+/**
+ * 文章公用方法
+ * Done is better that Perfect.
+ */
+
+namespace App\Admin\CommonMethod;
+use App\Admin\Models\Article\Article;
+use App\Admin\Models\Article\ArticleSensitiveWord;
+
+class CArticle
+{
+    /**
+     * 文章校检 [ 通过查询数据库中数据进行校检 ]
+     * @param $article_id
+     * @return string
+     */
+    public static function dataCheck($article_id): string
+    {
+        /**
+         * 校检内容为
+         * 文章标题 【中文字数 > 8】【敏感词】
+         * 导语 【敏感词】
+         * 特卖/头条图集 【图集产品数，根据表product_id判断 >= 10  <= 20】【产品标题敏感词】【产品内容敏感词】
+         * 特卖/头条专辑 【导语 + 描述字数 > 500字】【产品标题敏感词】【产品内容敏感词】
+         */
+        $article = Article::where('id',$article_id)->first();
+
+        // 标题中文字数校检
+        preg_match_all("/[\x{4e00}-\x{9fa5}]+/u", $article->title, $arr);
+        $titleChineseLength = 0;
+        foreach ($arr[0] as $k => $v) {
+            $titleChineseLength += mb_strlen($v);
+        }
+        if($titleChineseLength < 8)
+            return '文章标题至少需要8个中文！';
+
+        $sensitiveWord = ArticleSensitiveWord::get();
+        $titleSensitiveWords = $sensitiveWord->where('keywords_type',0)->where('type',1)->pluck('keywords');
+        $ContentSensitiveWords = $sensitiveWord->where('keywords_type',0)->where('type',2)->pluck('keywords');
+
+        // 标题/导语敏感词校检
+        foreach($titleSensitiveWords as $titleSensitiveWord){
+            if(strstr($article->title,$titleSensitiveWord))
+                return "标题发现敏感词『{$titleSensitiveWord}』";
+            if(strstr($article->desc,$titleSensitiveWord))
+                return "导语发现敏感词『{$titleSensitiveWord}』";
+        }
+
+        switch($article->type){
+            case 1: // 特卖图集
+            case 6: // 头条图集
+                $pics = $article->pics()->get();
+
+                // 产品数量校检
+                $count = $pics->groupBy('product_id')->count();
+                if($count < 10)
+                    return '图集产品数量必须大于或等于 10 个';
+                if($count > 20)
+                    return '图集产品数量不能大于 20 个';
+
+                // 敏感词校检
+                $titles = $pics->where('title','!=','')->pluck('title');
+                $describes = $pics->pluck('describe');
+                foreach($ContentSensitiveWords as $contentSensitiveWord){
+                    foreach($titles as $title){
+                        if(strstr($title,$contentSensitiveWord))
+                            return "产品标题包含敏感词『{$contentSensitiveWord}』";
+                    }
+                    foreach($describes as $describe){
+                        if(strstr($describe,$contentSensitiveWord))
+                            return "产品内容包含敏感词『{$contentSensitiveWord}』";
+                    }
+                }
+                break;
+            case 2: // 特卖专辑
+            case 7: // 头条专辑
+                $albums = $article->albums()->get();
+
+                // 专辑字数校检
+                $contentLength = !empty($article->desc) ? strlen($article->desc) : 0;
+                foreach($albums as $album) {
+                    $contentLength += !empty($album->describe) ? strlen($album->describe): 0;
+                }
+                if($contentLength < 500)
+                    return '专辑字数必须大于或等于500字';
+
+                // 敏感词校检
+                $titles = $albums->where('title','!=','')->pluck('title');
+                $describes = $albums->pluck('describe');
+                foreach($ContentSensitiveWords as $contentSensitiveWord){
+                    foreach($titles as $title){
+                        if(strstr($title,$contentSensitiveWord))
+                            return "产品标题包含敏感词『{$contentSensitiveWord}』";
+                    }
+                    foreach($describes as $describe){
+                        if(strstr($describe,$contentSensitiveWord))
+                            return "产品内容包含敏感词『{$contentSensitiveWord}』";
+                    }
+                }
+                break;
+        }
+        return 'true';
+    }
+
+    // 免审核
+    public static function avoidAudit()
+    {
+
+    }
+}

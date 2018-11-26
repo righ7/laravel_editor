@@ -1,0 +1,247 @@
+{{--@extends ('backend.layouts.index')--}}
+{{--@section('content')--}}
+<div id="app">
+    <Row type="flex" justify="center" align="middle">
+        <i-col span="23" style="margin-top: 20px;">
+            <i-input v-model="searchArr.title" placeholder="文章标题" style="width: 200px;"></i-input>
+            <i-input v-model="searchArr.author" placeholder="作者" style="width: 100px;"></i-input>
+            <i-input v-model="searchArr.account" placeholder="账户" style="width: 100px;"></i-input>
+            <i-select v-model="searchArr.platform" placeholder="发文平台" style="width:150px">
+                <i-option  value="-1" key="-1">全部</i-option>
+                <foreach name="platform" item="platform">
+                    <i-option  value="{$platform.id}" key="{$platform.id}">{$platform.platform_name}</i-option>
+                </foreach>
+            </i-select>
+            <i-select v-model="searchArr.status" placeholder="发文结果" style="width:120px">
+                <i-option  value="-1" key="-1">全部</i-option>
+                <i-option  value="0" key="0">待发布</i-option>
+                <i-option  value="1" key="1">发布成功</i-option>
+                <i-option  value="2" key="2">发布失败</i-option>
+            </i-select>
+            <i-select v-model="searchArr.platform_article_status" placeholder="平台文章状态" style="width:120px">
+                <i-option  value="-2" key="-2">全部</i-option>
+                <i-option  value="-1" key="-1">暂无</i-option>
+                <i-option  value="0" key="0">草稿</i-option>
+                <i-option  value="1" key="1">审核中</i-option>
+                <i-option  value="2" key="2">未通过</i-option>
+                <i-option  value="3" key="3">已通过</i-option>
+            </i-select>
+            <i-select v-model="searchArr.type" placeholder="文章类型" style="width:100px">
+                <i-option  value="-2" key="-2">全部</i-option>
+                <i-option  value="1" key="1">图集</i-option>
+                <i-option  value="2" key="2">专辑</i-option>
+                <i-option  value="3" key="3">微头条</i-option>
+                <i-option  value="4" key="4">其他</i-option>
+                <i-option  value="5" key="5">淘视频</i-option>
+            </i-select>
+            <date-picker v-model="searchArr.publish_time" @on-change="dateValueFormat" type="daterange" placeholder="发布时间" format="yyyy-MM-dd HH:mm:ss" style="width: 300px"></date-picker>
+            <i-button type="primary" @click="search">搜索</i-button>
+        </i-col>
+    </Row>
+    <Row type="flex" justify="center" align="middle">
+        <i-col span="23" style="margin-top: 20px">
+            <i-table :data="tableData" :columns="tableColumns" stripe></i-table>
+        </i-col>
+    </Row>
+    <Row type="flex" justify="center" align="middle">
+        <i-col style="margin-top: 20px">
+            <Page
+                    :total="amount"
+                    size="small"
+                    :page-size="pageCount"
+                    show-total
+                    show-elevator
+                    @on-change="pageChange"
+            ></Page>
+        </i-col>
+    </Row>
+    <back-top></back-top>
+</div>
+{{--@stop--}}
+
+{{--@section('after-scripts')--}}
+
+<script>
+
+    let vm = new Vue({
+        el: '#app',
+        data() {
+            return {
+                tableColumns: [
+                    {
+                        title: '标题',
+                        key: 'title',
+                        width: 630,
+                        render (h,params){
+                            let row = params.row;
+                            let text = row.title;
+                            //return h('span',text);
+                            return h('a', {
+                                attrs: {
+                                    href:row.display_url,
+                                    target: "view_window"
+                                }
+                            }, text);
+                        }
+                    },
+                    {
+                        title: '类型',
+                        key: 'type',
+                        width: 100,
+                        render (h,param){
+                            let text = '';
+                            switch(Number(param.row.type)){
+                                case 1:
+                                    text = '专辑';
+                                    break;
+                                case 0:
+                                    text = '图集';
+                                    break;
+                            }
+                            return h('Tag',text);
+                        }
+                    },
+                    {
+                        title: '频道',
+                        key: 'source',
+                        width: 135
+                    },
+                    {
+                        title: '阅读数',
+                        key: 'go_detail_count',
+                        width:85
+                    },
+                    {
+                        title: '评论数',
+                        key: 'comments_count',
+                        width: 130
+                    },
+                    {
+                        title: '文章发布时间',
+                        key: 'behot_time',
+                        width: 150
+                    },
+                    {
+                        title: '#',
+                        key: 'none',
+                        width: 150
+                    },
+                    {
+                        title: '#',
+                        key: 'none',
+                        width: 150
+                    }
+                ],
+                tableData: [],
+                searchArr: {
+                    title: '',
+                    author: '',
+                    status: '',
+                    publish_time: '',
+                    platform_article_status: '',
+                },
+                pageSize: 100,
+                pageCount: 20,
+                amount: 0,
+            }
+        },
+        methods: {
+            getArticleIssueData() {
+                axios.get("http://tm.youdnr.com/api/temai/article/day_hotarticle", {
+                    params: {
+                        article_type:0,
+                        page: 1,
+                        page_count: this.pageCount
+                    }
+                })
+                    .then(function (response) {
+                        vm.tableData = response.data.data;
+                        vm.amount = response.data.total;
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+            },
+            search() {
+                console.log('234');
+                this.searchArr['title']=this.searchArr['title'].replace(/\+/g,'%2B')
+                axios.get("http://tm.youdnr.com/api/temai/article/day_hotarticle", {
+                    params: {
+                        article_type:0,
+                        page: 1,
+                        page_count: this.pageCount,
+                        //searchArr: this.searchArr
+                    }
+                })
+                    .then(function (response) {
+                        vm.tableData = response.data.data;
+                        vm.amount = response.data.total;
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+            },
+            reject(article_id = '', article_ids = '', reject_reason = '') { // 驳回
+                let that = this;
+
+                if(article_ids === true){
+                    article_id = '';
+                    article_ids = [];
+                    this.$refs.selection.getSelection().map(item => {
+                        article_ids.push(item.id);
+                    });
+                }
+
+                that.$Modal.confirm({
+                    render: (h) => {
+                        return h('i-input', {
+                            props: {
+                                autofocus: true,
+                                type: 'textarea',
+                                rows: 4,
+                                placeholder: '请输入驳回原因...'
+                            },
+                            on: {
+                                input: (val) => {
+                                    reject_reason = val;
+                                }
+                            }
+                        })
+                    },
+                    onOk(){
+                        axios.get("{:U('Platform/AccountIssue/changeArticle')}", {
+                            params: {article_id,article_ids,reject_reason}
+                        }).then(response => {
+                            that.$Message.success(response.data);
+                            that.tableSearch();
+                        })
+                    }
+                });
+            },
+            pageChange(index) {
+                window.scrollTo(0,0); // 触发回到顶部，再加载数据
+                axios.get("http://tm.youdnr.com/api/temai/article/day_hotarticle", {
+                    params: {
+                        article_type:0,
+                        page: index,
+                        page_count: this.pageCount,
+                        searchArr: this.searchArr
+                    }
+                })
+                    .then(function (response) {
+                        vm.tableData = response.data.data;
+                        vm.amount = response.data.total;
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+            },
+            dateValueFormat(f,v){
+                this.searchArr.time = f;
+            }
+        }
+    });
+
+    vm.getArticleIssueData();
+</script>
+{{--@stop--}}

@@ -1,0 +1,329 @@
+<style>
+	td{white-space: nowrap;}
+	#test2 { position:fixed; top:25%;left:6%;z-index: 5}
+	/*    .my-modal{z-index:1002}
+        .my-modal-parent .ivu-modal-mask{
+            z-index: 1001;
+        }*/
+	.active_back{
+		background: #e6f0fb !important;
+	}
+	[v-cloak] {
+		display: none;
+	}
+	.top1{
+		padding: 10px;
+		background: rgba(0, 0, 0, 0.7);
+		color: #fff;
+		text-align: center;
+		border-radius: 2px;
+	}
+
+</style>
+<div id="app" class="content-box" v-cloak>
+	{{ csrf_field()}}
+	<div >
+		<form  name="edit_article_form"  method="post"  id="edit_article_form">
+			{{--<div id="titleVue"  style="min-height:0px;padding-bottom: 5px;">--}}
+				{{--<div class="col-xs-12 col-sm-6 col-md-6 col-lg-6 sortable-grid ui-sortable">--}}
+					{{--<div >--}}
+						{{--<input type="text" class="form-control" name="article_title"--}}
+							   {{--id="article_title" v-model="title"--}}
+							   {{--placeholder="请输入8～30个字符的标题，结尾不能为句号或叹号" maxlength="100"--}}
+							   {{--style="padding-left:0px;"/>--}}
+
+						{{--<span style="color: green" class="title_tip" v-if="titleNum <= 30">@{{ titleNum }}/30</span>--}}
+						{{--<span style="color: red" class="title_tip" v-else>@{{ titleNum }}/30</span>--}}
+					{{--</div>--}}
+
+				{{--</div>--}}
+				{{--<label>--}}
+					{{--<a class="btn btn-primary title-check" @click="checkTitleRepetiveRate">--}}
+						{{--<font style="color:white;">检测标题重复率</font>--}}
+					{{--</a>--}}
+				{{--</label>--}}
+
+
+
+			{{--</div>--}}
+			{{--<div>--}}
+				{{--<p :style="{ color: styleColor }" style="margin-left: 15px;">@{{ hint }}</p>--}}
+				{{--<p :style="{ color: repetiveColor }" style="margin-left: 15px;">@{{ repetitionHint }}</p>--}}
+				{{--<label :style="{ color: repetiveColor }" class="title-tip"></label>--}}
+			{{--</div>--}}
+			{{--<div style="clear: both"></div>--}}
+			{{--<template >--}}
+				{{--<Affix>--}}
+					{{--<div class="addBtnBox demo-affix" id="affix" style="margin-left:15px">--}}
+						<!--                    <div class="addBtnBox demo-affix" id="affix" style="margin-left: 15px;margin-top: 50px">-->
+						{{--<a class="btn btn-primary"href="#" @click="saveArticlePics">--}}
+							{{--<font style="color:white;"><i class="fa fa-tag"></i> 存草稿</font>                                            </a>--}}
+
+						{{--<a class="btn btn-primary"href="#" @click="auditArticle">--}}
+							{{--<font style="color:white;"><i class="fa fa-legal "></i>提交审核</font>--}}
+						{{--</a>--}}
+
+						{{--<a class="btn btn-primary" :href="previewUrl" @click="showPreview"  target="_blank" >--}}
+							{{--<font style="color:white;">--}}
+								{{--<i class="fa fa-print"></i>--}}
+								{{--预览--}}
+							{{--</font>--}}
+						{{--</a>--}}
+
+						{{--<a class="btn btn-primary"href="#" @click="setPlanTimemodal = true">--}}
+							{{--<font style="color:white;"><i class="fa fa-clock-o"></i>定时发布</font>--}}
+						{{--</a>--}}
+						{{--<a class="btn" @click="addGoodsmodal = true">--}}
+						{{--<font style="color:white;">请先添加宝贝＊ </font>--}}
+						{{--<goods-card @goods-select="goodsSelect">--}}
+
+						{{--</goods-card>--}}
+
+						{{--</a>--}}
+						<a class="btn" >
+							<goods-card @goods-select="goodsSelect"></goods-card>
+						</a>
+
+						<a v-if="goodsCardNum > 20">
+							产品卡数量:<span  style="color: red" >@{{ goodsCardNum }}</span>
+						</a>
+						<a v-else>
+							产品卡数量:<span  style="color: green" >@{{ goodsCardNum }}</span>
+						</a>
+
+
+
+
+					{{--</div>--}}
+				{{--</Affix>--}}
+			{{--</template>--}}
+
+				<i-select v-model="defaultTem" style="width:200px" @on-change="changeTem">
+					<i-option v-for="item in tem" :value="item.value" :key="item.label"  >@{{ item.label }}</i-option>
+				</i-select>
+
+				{{--<i-select v-model="model1" style="width:200px">--}}
+					{{--<i-option v-for="item in cityList" :value="item.value" :key="item.value">@{{ item.label }}</i-option>--}}
+				{{--</i-select>--}}
+
+		</form>
+	</div>
+    <div id="sortable" style="width: 54%;"></div>
+	{{--<modal--}}
+			{{--title="设置定时发布时间"--}}
+			{{--v-model="setPlanTimemodal"--}}
+			{{--ok-text="确定"--}}
+			{{--@on-ok="doPulishPlanTime"--}}
+			{{--class-name="vertical-center-modal">--}}
+		{{--<Date-picker id="planTime" type="datetime"  v-model="planTime" placeholder="选择日期和时间" style="width: 200px"></Date-picker>--}}
+	{{--</modal>--}}
+	{{--<back-top :height="100" :bottom="200">--}}
+		{{--<div class="top1">回到顶部</div>--}}
+	{{--</back-top>--}}
+</div>
+
+
+{{--拖拽插件--}}
+<script src="{{ asset('lib/Sortable.min.js') }}"></script>
+<script src="{{ asset('lib/vuedraggable.min.js') }}"></script>
+
+@include('vue.vue_components.goods_card.goodsCard');
+
+
+<script data-exec-on-popstate>
+    //拖拽
+    Vue.component('draggable');
+    let vm;
+    $(function () {
+
+        vm = new Vue({
+            el:'#app',
+            store, // 挂载store
+            data(){
+                return{
+
+                    title: '', // 标题
+                    goodsCardNum:0,//产品卡数量
+                    titleNum:0,//标题可写字数
+                    titleStatus:false,//检测标题重复率
+                    defaultTem: '',
+					temLen:0,
+					tem:[],
+					curTem:''
+                }
+
+            },
+
+            methods: {
+
+                goodsSelect(arr){
+                    console.log(arr.length);
+                    console.log(arr);
+                    vm.goodsCardNum=arr.length;
+                    var goods_id='';
+                    for(var i=0;i<arr.length;i++){
+                        goods_id+=arr[i].goods_id+','
+                    }
+
+                    $.get(
+                        '/admin/article/select_goods_data',
+                        {
+                            select_product_id: goods_id,
+                        },
+                        function (res) {
+                            var res=JSON.parse(res);
+                            console.log(res.DATA.length);
+
+                            var curTemArr=vm.curTem.split(',');
+                            console.log(curTemArr.length);
+                            console.log(curTemArr);
+
+                            for(var k=0;k<arr.length;){
+
+                                for(var j=0;j<curTemArr.length;j++){
+                                    if(curTemArr[j].indexOf('t')!=-1){
+                                        var img='';
+                                        if(curTemArr[j].indexOf('t1')!=-1){
+                                            if(curTemArr[j].indexOf('p2')!=-1){
+                                                img=res.DATA[k+1].images[2];
+                                            }
+                                            else{
+                                                img=res.DATA[k].images[2];
+                                            }
+
+                                        }
+                                        else{
+                                            if(curTemArr[j].indexOf('p2')!=-1){
+                                                img=res.DATA[k+1].images[1];
+                                            }
+                                            else{
+                                                img=res.DATA[k].images[1];
+                                            }
+                                        }
+                                        var html='<div class="IntSingle">' +
+                                            '<p class="IntHead">段落图片<span class="delBtn">X</span></p>' +
+                                            '<div class="IntContent">' +
+                                            '<img class="imgSingle" src="' + img + '"/>' +
+                                            '<button type="button" class="btn btn-primary btn-sm changeImgBtn">\n' +
+                                            '  <span class="glyphicon glyphicon-pencil"></span>' +
+                                            '</button>'+
+                                            '<button type="button" class="btn btn-primary btn-sm cutImgBtn">\n' +
+                                            '  <span class="glyphicon glyphicon-scissors"></span>' +
+                                            '</button>'+
+                                            '</div>'+
+                                            '</div>';
+                                    }
+                                    else if(curTemArr[j].indexOf('m')!=-1){
+                                        var des='';
+                                        if(curTemArr[j].indexOf('m1')!=-1){
+                                            if(curTemArr[j].indexOf('p2')!=-1){
+                                                des=res.DATA[k+1].main_describe;
+                                            }
+                                            else{
+                                                des=res.DATA[k].main_describe;
+                                            }
+                                        }
+                                        else{
+                                            if(curTemArr[j].indexOf('p2')!=-1){
+                                                des=res.DATA[k+1].sub_describe;
+                                            }
+                                            else{
+                                                des=res.DATA[k].sub_describe;
+                                            }
+
+                                        }
+                                        var html='<div class="IntSingle">' +
+                                            '<p class="IntHead">段落导语<span class="delBtn">X</span></p>' +
+                                            '<div class="IntSingleBox">' +
+                                            '<div class="textareaBox">' +
+                                            '<textarea class="form-control textareaDes" rows="4" placeholder="请输入10～100个汉字的导语">' + des + '</textarea>' +
+                                            '<span class="des_tip">0/100</span>' +
+                                            '</div>' +
+                                            '<button type="button" class="btn btn-primary getDesBtn">获取描述</button>' +
+                                            '</div>'+
+                                            '</div>';
+                                    }
+                                    else if(curTemArr[j].indexOf('car')!=-1){
+                                        var q=k;
+                                        if(curTemArr[j].indexOf('p2')!=-1){
+                                            q++;
+                                        }
+                                        var html= '<div class="IntSingle">' +
+                                            '<p class="IntHead">产品卡<span class="delBtn">X</span></p>' +
+                                            '<div class="IntContent">' +
+                                            '<div class="ul_img_box" style="display: none">'+res.DATA[q].images+'</div>'+
+                                            '<div class="div_left"><img src="'+arr[q].image+'" class="goods_img"/><span class="change_img">更换图片</span></div>'+
+                                            '<div class="div_center">' +
+                                            '<div><a href="'+arr[q].goods_url+'" target="_blank">'+arr[q].title+'</a></div>'+
+                                            '<div><span>￥</span><span class="price">'+arr[q].price+'</span></div>'+
+                                            '<div><span class="shop_name">'+arr[q].shop_name+'</span></div>'+
+                                            '</div>'+
+                                            '<button type="button" class="btn btn-default changeProductBtn">更换产品</button>'+
+                                            '</div>'+
+                                            '</div>';
+                                    }
+                                    $('#sortable').append(html);
+
+                                }
+                                if(vm.curTem.indexOf('p2')!=-1){
+                                    k+=2;
+                                }
+                                else{
+                                    k++;
+                                }
+                            }
+
+                            $( "#sortable" ).sortable();
+                            $( "#sortable" ).disableSelection();
+                        }
+                    )
+
+                },
+                getTemplate(){
+                    $.get(
+                        '/admin/article/get_template_list',
+						{
+                            platform:2,
+							_token:LA.token
+						},
+						function (res) {
+                            var data=JSON.parse(res);
+
+                            vm.defaultTem=data.data[0].template;
+                            vm.curTem=data.data[0].template;
+							vm.temLen=data.data.length;
+                            for(var i=0;i<vm.temLen;i++){
+                                var obj={
+                                    value: data.data[i].template,
+                                    label: data.data[i].template_name
+								};
+                                vm.tem.push(obj);
+							}
+                            console.log(vm.tem);
+                            console.log(vm.defaultTem);
+                        }
+					)
+                },
+                changeTem(v){
+                    console.log(v);
+                    vm.curTem=v;
+				}
+
+            },
+            // watch: {
+            //     title: function (n, o) {
+            //         //标题内容修改，重新检测重复率
+            //         vm.titleStatus = false;
+            //         vm.repetitionHint='';
+            //         this.checkTitle(n);
+            //     }
+            // }
+
+        });
+        vm.getTemplate();
+
+    });
+
+    //jq部分
+
+</script>

@@ -1,0 +1,128 @@
+#goods_url_data .request-tip{
+    display: none;
+    text-align: center;
+    line-height: 34px;
+}
+#img_panel{
+    display: none;
+}
+#goods_data{
+    display: none;
+}
+.img_ul>li{
+    float: left;
+    max-width: 122px;
+    max-height: 122px;
+    border: 1px solid #87adbd;
+    list-style-type:none;
+    margin: 10px;
+}
+.tb_goods_imgs{
+    max-width: 120px;
+    max-height: 120px;
+}
+.img_ul>li.img_active{
+    border: 1px solid red;
+}
+.goods_data_box{
+    width: 100%;
+}
+.box-body-left{
+    width: 30%;
+    float: left;
+
+}
+.goods_img_box{
+    width: 250px;
+    height: 250px;
+    border: 1px solid #87adbd;
+    position: relative;
+}
+.goods_img_box>img{
+    height: 100%;
+}
+.goods_img_box .cut-img-tip{
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    display: inline-block;
+    width: 100%;
+    height: 40px;
+    line-height: 40px;
+    color: white;
+    background: rgba(0,0,0,0.8);
+    z-index: 19891015;
+    text-align: center;
+    cursor: pointer;
+}
+.box-body-right{
+    float: left;
+    width: 60%;
+    height: 250px;
+}
+.goods_data_datail{
+    width: 100%;
+    height: 200px;
+}
+.data_button{
+    width: 100%;
+    height: 50px;
+    text-align: center;
+}
+.cancel{
+    margin-right: 30px;
+}
+.confirm{
+    margin-left: 30px;
+}
+
+/*裁剪图片*/
+.cutModel{
+    width: 90%;
+    height: 90%;
+    position: fixed;
+    top: 5%;
+    left: 5%;
+    border-radius: 4px;
+    box-shadow: 0 0 5px #333;
+    z-index: 19891017;
+    background: white;
+    padding: 10px;
+}
+
+.cutModel .selImgBtn{
+    /*margin-bottom: 10px;*/
+}
+.cutModel .footer{
+    /*margin-top: 10px;*/
+}
+.cutModel .head {
+    background-color: white;
+    margin-top: 10px;
+}
+.cutModel #targetImg{
+    /*max-width: 300px;*/
+    max-height: 600px;
+}
+.cutModel #preview-paneImg {
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 40px;
+    width: 30px;
+    height: 64px;
+    overflow: hidden;
+    border: 1px solid purple;
+}
+.cutModel #preview-paneImg .preview-container {
+    width: 100%;
+    height: 100%;
+}
+.cutModel canvas {
+    display: none;
+    position: fixed;
+    top: 100px;
+    right: 40px;
+    border: 1px solid red;
+}
+

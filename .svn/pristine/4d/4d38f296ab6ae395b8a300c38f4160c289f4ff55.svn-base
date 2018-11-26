@@ -1,0 +1,310 @@
+<!doctype html>
+<html >
+<head>
+    <meta charset="utf-8">
+    <meta name="description" content="文章详情">
+    <meta name="author" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>写作平台</title>
+
+    <link rel="stylesheet" type="text/css" href="{{ asset('css/iview.css') }}" />
+{{--    <link rel="stylesheet" type="text/css" href="{{ asset('js/layer/skin/layer.css') }}" />--}}
+
+    <style>
+        #article{
+            margin-bottom: 90px;
+        }
+        #article h1 {
+            display: block;
+            font-size: 21px;
+            font-weight: bolder;
+            color: #000;
+            padding: 15px 15px 30px;
+            margin: 0;
+        }
+        #article figure {
+            padding: 0 15px 15px;
+            margin: 0;
+            color: #303030;
+            font-size: 18px;
+            line-height: 1.5em;
+        }
+        #article figure figcaption {
+            margin-bottom: 15px;
+        }
+        #article figure .img-holder {
+            display: block;
+            margin: 0 auto;
+            max-width: 250px;
+            background-size: 118px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        #article figure img.loaded {
+            opacity: 1;
+        }
+        #article figure img {
+            display: block;
+            opacity: 0;
+            width: 100%;
+        }
+        .select-goods{
+            position: fixed;
+            bottom: 0;
+            height: 70px;
+            line-height: 70px;
+            width: 100%;
+            background: #000;
+            z-index: 100;
+            padding-left: 70px;
+        }
+        ul {
+            margin: 0;
+            padding: 0;
+        }
+        .select-goods ul li{
+            list-style: none;
+            float: left;
+            width: 70px;
+            padding-right: 20px;
+            padding-top: 12px;
+        }
+        .demo-badge{
+            width: 52px;
+            height: 52px;
+            background: #eee;
+            border-radius: 6px;
+            display: inline-block;
+        }
+        .li_i{
+            position: absolute;
+            top: -5px;
+            right: -7px;
+            background-color: #ed4014;
+            color: #fff;
+            border-radius: 50% ;
+            width: 22px;
+            height: 22px;
+            border: 2px solid #fff;
+            line-height: 21px;
+            text-align: center;
+        }
+        .li_div{
+            position: relative;
+            cursor: pointer;
+        }
+    </style>
+
+</head>
+<body  style=" margin:0 auto; ">
+<div id="app">
+    <div id="article">
+        <div class="tit">
+            <h1 style="display: inline-block;">@{{ title }}</h1>
+            <i-button type="success" @click="copyAll" v-if="title">复制该篇文章</i-button>
+        </div>
+        <figure v-for="(item,index) in articleData">
+            <a :href="item.product_url" target="_blank">@{{ item.product_title }}</a>
+            <i-button v-if="!item.choosed" type="warning" @click="sele_single(item,index)">选择该商品</i-button>
+            <Tag v-else color="green">已选择</Tag>
+            <i-button v-if="!item.choosed" type="info" @click="collect(item,index)">收藏商品</i-button>
+            <Tag v-else color="green">已收藏</Tag>
+            <figcaption>@{{ item.main_description }}</figcaption>
+            <div class="img-holder">
+                <img :src="item.main_picture" class="loaded">
+            </div>
+            <div v-if="item.vice_description">
+                <a :href="item.product_url" target="_blank">@{{ item.product_title }}</a>
+                <figcaption>@{{ item.vice_description }}</figcaption>
+                <div class="img-holder">
+                    <img :src="item.vice_picture" class="loaded">
+                </div>
+            </div>
+        </figure>
+    </div>
+    <div class="select-goods" v-if="getsingledata.length>0 || alshow">
+        <div>
+            <ul>
+                <draggable  v-model="getsingledata" @start="drag=true" @end="dragEnd">
+                    <li v-for="(single,index) in getsingledata">
+                        <div class="li_div" @mouseover="show_sub(single)" @mouseout="outStyle(single)">
+                            <img :src="single.main_picture" class="demo-badge">
+                            <sub class="li_i" @click="dele_single(index)" v-show="single.active">
+                                X
+                            </sub>
+                        </div>
+                    </li>
+                </draggable>
+            </ul>
+            <div v-if="getsingledata.length>0">
+                <i-button type="success" @click="saveSingel" style="margin:0 13px 0 22px">保存到草稿</i-button>
+                <i-button type="error" @click="clearAll">清空全部</i-button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="{{ URL::asset('js/vue.min.js') }}"></script>
+<script type="text/javascript" src="{{ URL::asset('js/iview.min.js') }}"></script>
+<script type="text/javascript" src="{{ URL::asset('js/axios.min.js') }}"></script>
+<script type="text/javascript" src="{{ URL::asset('js/jquery.js') }}"></script>
+<script type="text/javascript" src="{{ URL::asset('js/layer/layer.js') }}"></script>
+<script src="{{ asset('lib/Sortable.min.js') }}"></script>
+<script src="{{ asset('lib/vuedraggable.min.js') }}"></script>
+
+@include('vue.vue_components.goods_card.goodsCard');
+<script>
+    let vm;
+    vm = new Vue({
+        el:'#app',
+        data(){
+            return{
+                title:'',
+                articleData:[],
+                getsingledata:'',
+                alshow:false,
+            }
+        },
+        methods: {
+            getData(){
+                let article_id=this.getUrlKey('article'),
+                    title=this.getUrlKey('title');
+                axios.get("{{ route('article.good_article_detail_data') }}", {
+                    params: {
+                        article_id: article_id,
+                    }
+                })
+                    .then(function (response) {
+                        vm.title=title;
+                        vm.articleData = response.data.data;
+
+                        var copy_single=localStorage.getItem('copy_single')
+                        if (copy_single){
+                            copy_single=JSON.parse(copy_single);
+                        } else {
+                            var copy_single=[];
+                        }
+                        vm.getsingledata=copy_single;
+                        for (var i=0;i<vm.articleData.length;i++){
+                            for (var j=0;j<copy_single.length;j++){
+                                if (vm.articleData[i].product_id==copy_single[j].product_id){
+                                    vm.articleData[i].choosed=true;
+                                    break;
+                                }
+                            }
+                        }
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+            },
+            //获取URL参数
+            getUrlKey(name) {
+                return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.href) || [, ""])[1].replace(/\+/g, '%20')) || null
+            },
+            copyAll(){
+                let article_type=this.getUrlKey('article_type')
+                axios.post("{{ route('temai_article.article_copy_all') }}", {
+                    article_type: article_type,
+                    title: vm.title,
+                    data: vm.articleData
+                })
+                    .then(function (response) {
+                        layer.alert("已添加到草稿，您可以在'我的发文'内查看", {icon: 6,shade: 0});
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+            },
+            show_sub(single){
+                var _this=this;
+                this.$nextTick(function () {
+                    this.getsingledata.forEach(function (item) {
+                        _this.$set(item,'active',false);
+                    });
+                    this.$set(single,'active',true);
+                });
+            },
+            outStyle (single) {
+                this.$set(single,'active',false);
+            },
+            dele_single(index){
+                var copy_single=localStorage.getItem('copy_single')
+                if (copy_single){
+                    copy_single=JSON.parse(copy_single);
+                    for (var i=0;i<vm.articleData.length;i++){
+                        if (vm.articleData[i].product_id==copy_single[index].product_id){
+                            vm.articleData[i].choosed=false;
+                        }
+                    }
+                    copy_single.splice(index, 1);
+                    localStorage.setItem('copy_single',JSON.stringify(copy_single))
+                    vm.getsingledata=copy_single;
+                }
+            },
+            sele_single(goods,index){
+
+                var copy_single=localStorage.getItem('copy_single')
+                if (copy_single){
+                    copy_single=JSON.parse(copy_single);
+                } else {
+                    var copy_single=[];
+                }
+                copy_single.push(goods)
+                localStorage.setItem('copy_single',JSON.stringify(copy_single))
+                vm.getsingledata=copy_single;
+                vm.articleData[index].choosed=true;
+            },
+            dragEnd(){
+                vm.drag=false;
+                var _this=this;
+                this.getsingledata.forEach(function (item) {
+                    _this.$set(item,'active',false);
+                });
+                var copy_single=localStorage.getItem('copy_single')
+                if (copy_single){
+                    localStorage.setItem('copy_single',JSON.stringify(vm.getsingledata))
+                }
+            },
+            clearAll(){
+                this.$Modal.confirm({
+                    title: '选择商品',
+                    content: '<p>确定要清空吗？</p>',
+                    onOk: () => {
+                        localStorage.removeItem('copy_single');
+                        vm.getsingledata='';
+                        vm.alshow=true;
+                        for (x in vm.articleData){
+                            vm.articleData[x].choosed=false;
+                        }
+                        this.$Message.success('已清空！');
+                    }
+                });
+
+            },
+            saveSingel(){
+                var copy_single=localStorage.getItem('copy_single')
+                var article_type=this.getUrlKey('article_type')
+                if (copy_single){
+                    copy_single=JSON.parse(copy_single);
+                    axios.post("{{ route('temai_article.article_copy_single') }}", {
+                        article_type: article_type,
+                        data: copy_single
+                    })
+                        .then(function (response) {
+                            layer.alert("已添加到草稿，您可以在'我的发文'内查看", {icon: 6,shade: 0});
+                        })
+                        .catch(function (error) {
+                            console.log(error);
+                        });
+                }
+            },
+            collect(){
+
+            }
+        }
+    });
+    vm.getData();
+</script>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!doctype html>
+<html >
+<head>
+    <meta charset="utf-8">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" type="text/css" href="{{ URL::asset('simpleboot/css/public.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ URL::asset('smartadmin/css/bootstrap.min.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ URL::asset('smartadmin/css/font-awesome.min.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ URL::asset('smartadmin/css/smartadmin-production.min.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ URL::asset('smartadmin/css/smartadmin-production-plugins.min.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ URL::asset('smartadmin/css/smartadmin-skins.min.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ URL::asset('smartadmin/css/jquery.gritter.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ URL::asset('smartadmin/css/smartadmin-rtl.min.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ URL::asset('css/iview.css') }}" />
+
+    <style>
+        form .input-order{margin-bottom: 0px;padding:3px;width:40px;}
+        .table-actions{margin-top: 5px; margin-bottom: 5px;padding:0px;}
+        .table-list{margin-bottom: 0px;}
+        body{overflow-y: auto;}
+        html{overflow-y: auto;}
+    </style>
+    <!--[if IE 7]>
+    <link rel="stylesheet" href="__PUBLIC__/simpleboot/font-awesome/4.4.0/css/font-awesome-ie7.min.css">
+            <link rel="stylesheet" type="text/css" media="screen" href="css/smartadmin-skins.min.css">
+        <!-- SmartAdmin RTL Support -->
+    <![endif]-->
+
+    {{--<script src="__PUBLIC__/js/jquery.js"></script>--}}
+
+
+    <style>
+
+        #main{
+            /*max-width:540px;*/
+            /*padding:0 0px;*/
+            /*margin:0 auto;*/
+
+        }
+        p{
+            /*text-indent: 2em; *//*em是相对单位，2em即现在一个字大小的两倍*/
+            padding-left:0px;
+        }
+        p img{
+            padding-left:0px;
+        }
+        /*手机预览*/
+        .phone-preview {
+            background-image: url(https://tms3.bytecdn.cn/dist/online/public/img/iphone_7_plus_a6f7b5c.png);
+            background-size: cover;
+            width: 362px;
+            height: 738px;
+            padding-top: 94px;
+            float: left;
+            margin: 10px;
+        }
+        .preview-article-content{
+            width: 312px;
+            height: 555px;
+            background-color: #1b1b1b;
+            overflow: hidden;
+            margin-left: 25px;
+            padding-top: 90px;
+            position: relative;
+        }
+        .preview-article-content img{
+            /*width: 100%;*/
+        }
+        .phone-des{
+            display: inline-block;
+            width: 100%;
+            height: 180px;
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            background: rgba(27,27,27,.7);
+        }
+        .goods-title{
+            margin: 10px 15px 12px;
+            height: 32px;
+            line-height: 32px;
+            overflow: hidden;
+            color: #fff;
+            font-size: 18px;
+        }
+        .tt-des{
+            color: #cacaca;
+            font-size: 16px;
+            line-height: 22px;
+            max-height: 178px;
+            word-break: break-all;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            overflow-x: hidden;
+            margin-left: 15px;
+        }
+
+    </style>
+
+</head>
+<body  style=" margin:0 auto; ">
+<div id="app">
+    <!--max-height:500px;width:524px;-->
+    <div class="wrap js-check-wrap pl10" id="main" style="margin-left: 0">
+        <!--width:524px;-->
+        <section id="widget-grid" style="margin:0 auto;text-align:left;border:none;"  >
+            <article class="col-xs-24 col-sm-12 col-md-12 col-lg-12 sortable-grid ui-sortable" style=" margin:0 auto;border:none;">
+                <div class="jarviswidget jarviswidget-color-darken " data-widget-editbutton="false" role="widget" style=" margin:0 auto;border-right: none;">
+                    {{--<header role="heading">--}}
+                        {{--<span class="widget-icon">--}}
+                            {{--<i class="fa fa-table"></i>--}}
+                        {{--</span>--}}
+                        {{--<h2>预览图集 </h2>--}}
+                        {{--<span class="jarviswidget-loader">--}}
+                            {{--<i class="fa fa-refresh fa-spin"></i>--}}
+                        {{--</span>--}}
+
+                        {{--<div style="float:right;padding-top:0px;margin-top:0px;"  >--}}
+                            {{--<a class="btn btn-sm btn-primary" href="javascript:returnUrl();" style="float:right;margin-top:2px 2px;" >--}}
+                                {{--<font style="color:white;"> 关闭 </font>--}}
+                            {{--</a>--}}
+                        {{--</div>--}}
+                    {{--</header>--}}
+                    <notempty name="threePics">
+                        <div style="display: inline-block;width: 1000px;border:none;padding-left: 20px">
+                            <p style="margin-top: 8px">
+                                三图预览：
+                            </p>
+                            <volist v-for="(item,index) in items" >
+                                <span v-if="index < 3">
+                                    <img :src="item.goodsDatas.main_pic" style='width: 300px;height:300px;margin-right:10px' >
+                                </span>
+
+                            </volist>
+                        </div>
+                        <div style="display: inline-block;width: 400px;border: none">
+                            <p style="margin-top: 8px">
+                                单图预览：
+                            </p>
+                            <img :src="items[0].goodsDatas.main_pic" style='width: 300px;height:300px; ' >
+                        </div>
+
+                    </notempty>
+                    <div  class="widget-body mt10"  style="min-height:0px;padding-bottom: 5px;float:left;border-right: none;border-left:none;">
+                        <div class="widget-body no-padding">
+                            <div  style="overflow-x:hidden;overflow-y:hidden;text-align:left;">
+                                <div style="margin:20px auto;text-align: center;font-size:14px;font-weight: bold;">
+                                    @{{ title }}
+                                </div>
+                                <volist v-for="data in items" name="dataPics" >
+                                    <div class="phone-preview">
+                                        <div class="preview-article-content">
+                                            <p>
+                                                <img :src="data.goodsDatas.main_pic" style='max-width:312px;' >
+                                            </p>
+                                            <div class="phone-des" >
+                                                <p class="goods-title">
+                                                    @{{ data.goodsDatas.title_recommend }}
+                                                    {{--<if condition="$vo['image_type'] eq 1">--}}
+                                                        {{--{$vo['title']}--}}
+                                                    {{--</if>--}}
+                                                </p>
+
+                                                <p class="tt-des">
+                                                    @{{ data.goodsDatas.main_describe }}
+                                                </p>
+
+                                            </div>
+                                            <div style="clear:both;"></div>
+
+                                        </div>
+                                    </div>
+
+                                    <div class="phone-preview">
+                                        <div class="preview-article-content">
+                                            <p>
+                                                <img :src="data.goodsDatas.sub_pic" style='max-width:312px;' >
+                                            </p>
+                                            <div class="phone-des" >
+                                                <p class="goods-title">
+
+                                                </p>
+
+                                                <p class="tt-des">
+                                                    @{{ data.goodsDatas.sub_describe }}
+                                                </p>
+
+                                            </div>
+                                            <div style="clear:both;"></div>
+
+                                        </div>
+                                    </div>
+                                </volist>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </article>
+        </section>
+    </div>
+    <div style="clear:both;"></div>
+    <div style="margin:0 auto;text-align: center;">
+        <label class="btn-group">
+            {{--<a class="btn btn-sm btn-primary" href="javascript:returnUrl();" >--}}
+                {{--<font style="color:white;"> 关闭 </font>--}}
+            {{--</a>--}}
+            <i-button type="primary" @click="closeUrl">关闭</i-button>
+        </label>
+    </div>
+</div>
+
+{{--<admintpl file="editor_footer" />--}}
+<script type="text/javascript" src="{{ URL::asset('js/vue.min.js') }}"></script>
+<script type="text/javascript" src="{{ URL::asset('js/iview.min.js') }}"></script>
+<script>
+//    resizeWindow();
+//    function resizeWindow(){
+//        var acticle_pos_div = $("#acticle_pos_div").height();
+//        var winH = $(window).height()-150;
+//
+//        $("#main").css('max-height',winH+'px');
+//        $("#main").css('height',winH+'px');
+//    }
+//    function returnUrl(){
+//        window.close();
+//    }
+
+
+        let vm;
+        vm = new Vue({
+            el:'#app',
+            data(){
+                return{
+                    title:'',
+                    items:[],
+                }
+            },
+            methods: {
+                showPreview(){
+                    vm.items=JSON.parse(localStorage.getItem('selectPicsGoodsData'));
+                    vm.title=JSON.parse(localStorage.getItem('articleTitle'));
+                    console.log(vm.items.length)
+                },
+                closeUrl(){
+                    window.opener=null;
+                    window.open('','_self');
+                    window.close();
+                }
+            }
+        });
+        vm.showPreview();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,923 @@
+/*通用样式*/
+.selectStyle{
+    width: 80px;
+    border-radius: 4px;
+    height: 30px;
+}
+.inputStyle{
+    width: 140px;
+    border-radius: 4px;
+    height: 30px;
+    border: 1px solid #A9A9A9;
+    text-indent: 4px;
+    margin-left: 10px;
+}
+.imgCheck{
+    zoom:300%;
+}
+i.layui-anim{display:inline-block}
+
+.content-box{
+    width: 100%;
+    height: 100%;
+    background: white;
+    padding: 20px;
+    position: relative;
+    min-height: 800px;
+}
+.content-box-left{
+    width: 54%;
+
+}
+.content-box-right{
+    width:466px;
+    height: 690px;
+    position: fixed;
+    top: 120px;
+    right: 20px;
+    overflow: hidden;
+}
+
+.titleBox{
+    position: relative;
+    overflow: hidden;
+}
+.titleDiv{
+    position: relative;
+    width: 50%;
+    float: left;
+}
+.titleInp{
+    margin: 10px;
+}
+.addBabyAtlas{
+    float: left;
+    margin-left: 10px;
+}
+.title_tip{
+    font-size: 14px;
+    position: absolute;
+    right: 20px;
+    top: 6px;
+    color: #999;
+}
+.title_tip.warning{
+    color: #ed4040;
+}
+.firstImg{
+    margin-bottom: 10px;
+}
+.firstImg .imgSingle{
+    max-width: 100px;
+    max-height: 100px;
+    margin-right: 10px;
+}
+.firstImg .changeImgBtn {
+    margin-right: 10px;
+}
+.leadsBox{
+    position: relative;
+}
+.leads{
+    resize: none;
+}
+.leads_tip {
+    font-size: 14px;
+    position: absolute;
+    right: 20px;
+    bottom: 6px;
+    color: #999;
+}
+.leads_tip.warning{
+    color: #ed4040;
+}
+.threeImgBox{
+    display: none;
+    overflow: hidden;
+}
+.addCover,.supCover{
+    margin: 10px;
+    margin-left: 0;
+}
+.addCover .oneImgBox,.supCover .oneImgBox,.threeImgBox .sinImgBox{
+    margin-top: 10px;
+    position: relative;
+}
+.threeImgBox .sinImgBox{
+    float: left;
+    margin-right: 10px;
+}
+.addCover .oneImgBox .ImgBox,.supCover .oneImgBox .ImgBox,.threeImgBox .sinImgBox .ImgBox{
+    display: inline-block;
+    width: 164px;
+    /*height: 112px;*/
+    /*line-height: 112px;*/
+    text-align: center;
+    border: 1px solid #e8e8e8;
+    background-color: #f0f1f3;
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+    cursor: pointer;
+    font-size: 40px;
+    font-weight: bold;
+    color: #ccc;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+.addCover .oneImgBox .ImgBox{
+    height: 92px;
+    line-height: 92px;
+}
+.supCover .oneImgBox .ImgBox{
+    height: 164px;
+    line-height: 164px;
+}
+.addCover .oneImgBox .myImgBox,.addCover .sinImgBox .myImgBox{
+    display: inline-block;
+    width: 164px;
+    height: 92px;
+    overflow: hidden;
+}
+.threeImgBox .sinImgBox .ImgBox{
+    height: 92px;
+    line-height: 92px;
+}
+.supCover .oneImgBox .myImgBox{
+    display: inline-block;
+    width: 164px;
+    height: 164px;
+    overflow: hidden;
+}
+/*弹出框*/
+.dialogCover,.dialogCoverSup{
+    width: 90%;
+    height: 90%;
+    position: fixed;
+    top: 5%;
+    left: 5%;
+    border-radius: 4px;
+    box-shadow: 0 0 5px #333;
+    z-index: 1031;
+    background: white;
+    padding: 10px;
+}
+.dialogCover button,.dialogCoverSup button{
+    margin-right: 10px;
+}
+/*裁剪图片*/
+.dialogCover .head,.dialogCoverSup .head {
+    margin-top: 10px;
+    height: 400px;
+    background-color: white;
+}
+.dialogCover #target,.dialogCoverSup #tarsup{
+    max-height: 400px;
+}
+
+/*导语*/
+.introduction{
+    width: 90%;
+}
+
+/*目标人群*/
+.selectBox,.classBox,.addBtnBox{
+    margin-bottom: 10px;
+}
+.addBtnBox,.saveBtnBox{
+    margin-top: 10px;
+}
+.isLocationLabe{
+    margin-left: 20px;
+}
+.classBox .classSingle{
+    overflow: hidden;
+}
+.classBox .classSingle .classParent{
+    display: inline-block;
+    width: 8%;
+    float: left;
+}
+.classBox .classSingle .classChild{
+    display: inline-block;
+    width: 92%;
+    float: left;
+}
+.classBox .classSingle .classChild label:nth-child(1){
+    margin-left: 10px;
+}
+/*添加段落导语*/
+.IntSingle{
+    width: 100%;
+    height: 180px;
+    border: 1px solid #0d6aad;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+.IntSingle .IntHead{
+    line-height: 30px;
+    border-bottom: 1px solid #C9C5C5;
+    text-indent: 10px;
+    overflow: hidden;
+    cursor: move;
+    margin-bottom: 10px;
+}
+.IntSingle .IntHead .delBtn{
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    float: right;
+    margin-right: 10px;
+}
+.IntSingle .IntSingleBox{
+    overflow: hidden;
+}
+.IntSingle .textareaBox{
+    padding: 10px;
+    padding-top: 0;
+    position: relative;
+    width: 80%;
+    float: left;
+}
+.getDesBtn{
+    float: left;
+}
+.IntSingle .textareaBox .des_tip{
+    font-size: 14px;
+    position: absolute;
+    right: 20px;
+    bottom: 16px;
+    color: #999;
+}
+.IntSingle .textareaBox .des_tip.warning{
+    color: #ed4040;
+}
+/*card_tip*/
+.IntSingle .card_tip{
+    font-size: 14px;
+    position: absolute;
+    right: 20px;
+    bottom: 10px;
+    color: #999;
+}
+.IntSingle .card_tip.warning{
+    color: #ed4040;
+}
+.IntSingle textarea{
+    width: 100%;
+    resize:none;
+}
+.IntSingle .IntContent{
+    height: 95px;
+    overflow: hidden;
+}
+.IntSingle .IntContent .imgSingle{
+    margin-left: 10px;
+    margin-right: 10px;
+    max-width: 100px;
+    max-height: 100px;
+}
+.IntSingle .changeImgBtn{
+    margin-right: 10px;
+}
+/*三图*/
+.threeImgModel{
+    width: 90%;
+    height: 90%;
+    position: fixed;
+    top: 5%;
+    left: 5%;
+    border-radius: 4px;
+    box-shadow: 0 0 5px #333;
+    z-index: 1031;
+    background: white;
+    padding: 10px;
+}
+.threeImgModel .head {
+    margin-top: 10px;
+    height: 400px;
+    background-color: white;
+}
+.threeImgModel #targetImg{
+    max-height: 400px;
+}
+/*添加图片*/
+.addImgModel{
+    width: 90%;
+    height: 90%;
+    position: fixed;
+    top: 5%;
+    left: 5%;
+    border-radius: 4px;
+    box-shadow: 0 0 5px #333;
+    z-index: 1031;
+    background: white;
+    padding: 10px;
+}
+
+.addImgModel .selImgBtn{
+    /*margin-bottom: 10px;*/
+}
+.addImgModel .footer{
+    margin-top: 10px;
+}
+.addImgModel .head {
+    height: 400px;
+    background-color: white;
+    margin-top: 10px;
+}
+.addImgModel #targetImg{
+    /*max-width: 300px;*/
+    max-height: 400px;
+}
+
+
+/*更换图片*/
+.changeImgModel{
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    border-radius: 4px;
+    box-shadow: 0 0 5px #333;
+    z-index: 99999999;
+    background: white;
+    padding: 10px;
+    overflow-y: scroll;
+}
+.changeImgModel .head {
+    height: 800px;
+    background-color: white;
+    margin-top: 10px;
+}
+.changeImgModel #targetImg,.changeImgModel #target{
+    /*max-width: 300px;*/
+    max-height: 800px;
+}
+/*裁剪图片提示*/
+.crop_tip{
+    position: absolute;
+    width: 400px;
+    height: 160px;
+    top:200px;
+    left: 200px;
+    background: white;
+    z-index:999999999;
+    border-radius: 4px;
+    box-shadow: 0 0 5px #333;
+}
+.crop_tip p{
+    text-align: center;
+    line-height: 128px;
+}
+.crop_tip_cancel{
+    height: 40px;
+    width: 100%;
+    border-bottom: 1px solid #ccc;
+    overflow: hidden;
+}
+.crop_tip_cancel span{
+    display: inline-block;
+    font-weight: bold;
+    cursor: pointer;
+    float: right;
+    font-size: 20px;
+    margin-right: 10px;
+    line-height: 40px;
+}
+
+/*footer button*/
+.saveBtnBox{
+    width: 110px;
+    float: left;
+    overflow: hidden;
+}
+.saveBtnBox button:first-of-type{
+    margin-top: 180px;
+}
+.saveBtnBox button{
+    margin-bottom: 20px;
+    float: right;
+}
+.publishTip{
+    float: right;
+    margin-bottom: 20px;
+}
+/*手机预览*/
+.phone-preview,.refresh-preview{
+    background-image: url(//p2.pstatp.com/large/pgc-image/153380077374313aa2d5949.png);
+    background-size: cover;
+    height: 690px;
+    width: 356px;
+    padding-top: 89px;
+}
+.phone-preview{
+    margin: 20px;
+}
+.refresh-preview{
+    position: relative;
+    float: right;
+}
+.refreshBtn,.refreshBtn_tm{
+    position: absolute;
+    top: 64px;
+    left: 48px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    cursor: pointer;
+}
+.bg-white{
+    position: absolute;
+    top: 34px;
+    right: 44px;
+    width: 22px;
+    height: 48px;
+    background: white;
+}
+.preview-article-content{
+    width: 287px;
+    height: 526px;
+    background-color: white;
+    overflow-y: scroll;
+    margin-left: 35px;
+    padding: 0 15px;
+}
+.preview-article-content .tt-title{
+    margin: 18px 0;
+    font-size: 20px;
+    color: #222222;
+    font-weight: 400;
+    line-height: 1.4;
+}
+.tt-first-img img{
+    width: 100%;
+}
+.tt-leads,.article_img,.article_des,.article_card,.tt-first-img{
+    margin-bottom: 10px;
+}
+.article_img .tt-img{
+    width: 100%;
+}
+.article_card{
+    border-bottom: 1px solid #d8d8d8;
+    border-top: 1px solid #d8d8d8;
+}
+.article_card .tt-card{
+    overflow: hidden;
+    padding: 10px 0;
+}
+.article_card .tt-card .tt-card-left{
+    float: left;
+    width: 32.45%;
+    margin-right: 12px;
+}
+.article_card .tt-card .tt-card-left .tt-img{
+    width: 100%;
+}
+.article_card .tt-card .tt-card-right{
+    overflow: hidden;
+}
+.tt-link{
+    font-size: 12px;
+    line-height: 14px!important;
+    max-height: 42px;
+    color: #222!important;
+    word-wrap: break-word;
+    font-weight: 400!important;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+.tt-price{
+    color: #3C8DBC;
+    font-weight: 700;
+    font-size: 12px;
+    margin-bottom: 0;
+}
+
+/*陈梦婷---产品卡样式*/
+
+.div_left{
+    float: left;
+    width: 100px;
+    height: 100px;
+    overflow: hidden;
+    margin: 0 10px;
+    padding-bottom: 10px;
+    position: relative;
+}
+.div_left img{
+    width: 100%;
+    height: auto;
+}
+.change_img,.edit_img{
+    position: absolute;
+    display: inline-block;
+    width: 100px;
+    height: 30px;
+    bottom: 0;
+    left: 0;
+    line-height: 30px;
+    text-align: center;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    text-align: center;
+    cursor: pointer;
+    font-size: 10px;
+}
+.div_center{
+    float: left;
+    width: 30%;
+    margin-right: 10px;
+}
+.div_right{
+    float: right;
+    width: 51%;
+    padding-right: 10px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+
+.IntSingle textarea.goods_des{
+    width: 100%;
+    height: 90px;
+}
+
+/*----end----*/
+
+
+/*图集*/
+.atlasSingle{
+    width: 328px;
+    height: 398px;
+    border-radius: 4px;
+    border: 1px solid #0d6aad;
+    margin: 10px;
+    padding: 10px;
+    float: left;
+    position: relative;
+}
+.atlasSingle .delAtlasBtn{
+    position: absolute;
+    right: -10px;
+    top: -10px;
+    font-size: 20px;
+    color: #ECF0F5;
+    cursor: pointer;
+}
+.atlasSingle .delAtlasBtn:hover{
+    color: #3c8dbc;
+}
+.atlasSingle .atlas_img{
+    overflow: hidden;
+}
+.atlasSingle .atlas_img .main_img{
+    width: 200px;
+    height: 200px;
+    overflow: hidden;
+    float: left;
+    margin:0 10px 10px 0;
+}
+.atlasSingle .atlas_img .main_img img{
+    width: 100%;
+}
+.atlasSingle .atlas_img .vice_box{
+    width: 90px;
+    height: 90px;
+    overflow: hidden;
+    float: left;
+}
+.atlasSingle .atlas_img .vice_box img{
+    width: 100%;
+    float: left;
+}
+.atlasSingle .IntHead{
+    line-height: 30px;
+    border-bottom: 1px solid #C9C5C5;
+    text-indent: 10px;
+    overflow: hidden;
+    cursor: move;
+    margin-bottom: 10px;
+}
+.atlasSingle .IntHead .delAtlasBtn{
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    float: right;
+    margin-right: 10px;
+}
+
+.productNumSpan{
+    margin-left: 10px;
+}
+.productNum{
+    /*margin:0 10px;*/
+    width: 110px;
+    height: 34px;
+    text-indent: 4px;
+    border-radius: 3px;
+    vertical-align: bottom;
+    border: 1px solid #0d6aad;
+}
+.imgTable{
+    margin-top: 14px;
+}
+.imgTable .imgBox{
+    width: 100px;
+    height: 100px;
+    overflow: hidden;
+}
+.imgTable .imgBox img{
+    max-width: 100px;
+    max-height: 100px;
+}
+
+.uploadImgModel .head {
+    height: 400px;
+    background-color: white;
+    margin-top: 10px;
+}
+.uploadImgModel #targetImg{
+    /*max-width: 300px;*/
+    max-height: 400px;
+}
+.pieceImgModel{
+     overflow: hidden;
+ }
+.pieceImgModel .pieceImgBox{
+    float: left;
+    width: 160px;
+    height: 160px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #0d6aad;
+    margin-right: 10px;
+}
+.pieceImgModel .pieceImgBox img{
+     height: 100%;
+ }
+.pieceImgModel .pieceImgBox span.upImg1,.pieceImgModel .pieceImgBox span.upImg2,.pieceImgModel .pieceImgBox span.upImg3{
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    display: inline-block;
+    width: 76px;
+    height: 30px;
+    line-height: 30px;
+    color: white;
+    background: rgba(0,0,0,0.5);
+    text-align: center;
+    cursor: pointer;
+}
+.pieceImgModel .pieceImgBox span.cutSelImage{
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    display: inline-block;
+    width: 76px;
+    height: 30px;
+    line-height: 30px;
+    color: white;
+    background: rgba(0,0,0,0.5);
+    text-align: center;
+    cursor: pointer;
+}
+.pieceImgModel .previewBox{
+    width: auto;
+    height: 160px;
+    overflow: hidden;
+    float: right;
+}
+.pieceImgModel .previewBox img{
+    height: 100%;
+}
+.cardAddImgBtn,.cardAddBabyBtn{
+    margin: 28px;
+    margin-left: 10px;
+}
+.lineBtn{
+    margin-left: 30px;
+}
+.lineBox{
+    display: inline-block;
+    width: 80px;
+    height: 34px;
+    overflow: hidden;
+    border: 1px solid #0d6aad;
+    border-radius: 4px;
+    vertical-align: bottom;
+}
+.lineBox img{
+    width: 100%;
+    margin-top: 12px;
+}
+.lineUl li{
+    list-style: none;
+    float: left;
+    width: 20%;
+    height: 80px;
+    padding: 10px;
+    margin: 0 2%;
+    margin-top: 10px;
+    border: 1px solid #CCCCCC;
+    cursor: pointer;
+}
+.lineUl li.select{
+    border: 1px solid #0d6aad;
+}
+.lineUl li img{
+    width: 100%;
+    margin-top: 22px;
+}
+.lineImgSin{
+   text-align: center;
+    max-height: 42px;
+}
+
+/*定时发布*/
+.timeBox{
+    background: white;
+    padding: 20px 70px;
+}
+.timeBox .timingTip{
+    /*text-align: center;*/
+    /*line-height: 80px;*/
+    height: 80px;
+}
+.timeBox #timingTime{
+    margin-left: 10px;
+}
+.timeBox .surePubBtn{
+    margin:0 30px 0 100px;
+}
+
+/*图集预览*/
+.atlas-preview{
+    background-image: url(https://tms3.bytecdn.cn/dist/online/public/img/iphone_7_plus_a6f7b5c.png);
+    background-size: cover;
+    width: 362px;
+    height: 738px;
+    padding-top: 94px;
+    float: left;
+    margin: 10px;
+}
+.atlas-preview .preview-atlas-content{
+    width: 312px;
+    height: 555px;
+    background-color: #1b1b1b;
+    overflow: hidden;
+    margin-left: 25px;
+    padding-top: 90px;
+    position: relative;
+}
+.atlas-preview .tt-des{
+    height: 65px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    margin: auto;
+
+    color: #cacaca;
+    font-size: 16px;
+    line-height: 22px;
+    max-height: 178px;
+    word-break: break-all;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+}
+.atlas-preview .goods-title{
+    margin: 10px 15px 12px;
+    height: 32px;
+    line-height: 32px;
+    overflow: hidden;
+    color: #fff;
+    font-size: 18px;
+}
+.cover-box{
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+.cover-box .cover-box-three{
+    width: 760px;
+    overflow: hidden;
+}
+.cover-box .cover-box-three .cover-box-three-big{
+    width: 500px;
+    height: 500px;
+    float: left;
+    margin-right: 10px;
+}
+.cover-box .cover-box-three .cover-box-three-big img{
+    width: 100%;
+}
+
+.cover-box .cover-box-three .cover-box-three-small{
+    width: 250px;
+    height: 250px;
+    float: left;
+}
+.cover-box .cover-box-three .cover-box-three-small img{
+    width: 100%;
+}
+
+.preview-h3{
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+/*特卖专辑*/
+.tm_title{
+    width: 75%;
+    float: left;
+    position: relative;
+}
+.tm_title input{
+    text-indent: 4px;
+}
+.tm_title_check{
+    float: right;
+}
+.tm_title_tip{
+    position: absolute;
+    top: 8px;
+    right: 4px;
+}
+/*showTem*/
+.showTem{
+    position: absolute;
+    top: 208px;
+    left: 290px;
+    width: 300px;
+    height: 400px;
+    border-radius: 4px;
+    box-shadow: 0 0 5px #333;
+    z-index: 99999999;
+    background: white;
+    padding: 10px;
+    overflow-y: scroll;
+
+}
+.showTem img{
+    max-width: 60px;
+    max-height: 60px;
+}
+
+/*firstImg_tm*/
+.firstImg_tm{
+    margin-bottom: 10px;
+    position: relative;
+}
+.emptyImg{
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: inline-block;
+    width: 100px;
+    height: 100px;
+    line-height: 100px;
+    text-align: center;
+    border: 1px solid #e8e8e8;
+    background-color: #f0f1f3;
+    border-radius: 2px;
+    font-size: 60px;
+    color: #e8e8e8;
+}
+.firstImg_tm img{
+    max-height: 100px;
+    max-width: 100px;
+}
+.all_pro_ul{
+    overflow: hidden;
+    margin: 10px;
+}
+.all_pro_ul li,.all_pro_div ul li{
+    float: left;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+.all_pro_ul li img,.all_pro_div ul li img{
+    max-height: 100px;
+    max-width: 100px;
+}
+.all_pro_div ul{
+    display: none;
+    overflow: hidden;
+    margin: 10px;
+}
+.all_pro_div ul:first-of-type{
+    display: block;
+}
+.all_pro_div ul li{
+    border: 1px solid transparent;
+}
+.all_pro_div ul li.active{
+    border: 1px solid red;
+}
+
+

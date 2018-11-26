@@ -1,0 +1,166 @@
+<?php
+
+namespace App\Admin\Extensions\Actions;
+
+use Encore\Admin\Admin;
+
+class ArticleAction
+{
+    protected $row;
+
+    public function __construct($row)
+    {
+        $this->row = $row;
+    }
+
+    protected function script()
+    {
+        $token = csrf_token();
+        $route = route('articles/change_article_status', ['id' => '']) . '/';
+        return <<<SCRIPT
+        // 提交审核
+        $('.change-article-status').on('click', function () {
+            let id = $(this).data('id');
+            let status = $(this).data('status');
+            let title = status == 3 ? "提交审核?" : "撤回分发?";
+            swal({
+                title: title,
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "确认",
+                showLoaderOnConfirm: true,
+                cancelButtonText: "取消",
+                preConfirm: function() {
+                    return new Promise(function(resolve) {
+                        $.ajax({
+                            method: 'post',
+                            url: '$route' + id,
+                            data: {
+                                _method:'post',
+                                _token:'$token',
+                                status: status,
+                            },
+                            success: function (data) {
+                                $.pjax.reload('#pjax-container');
+                                resolve(data);
+                            }
+                        });
+                    });
+                }
+            }).then(function(result) {
+                var data = result.value;
+                if (typeof data === 'object') {
+                    if (data.status) {
+                        swal(data.message, '', 'success');
+                    } else {
+                        swal(data.message, '', 'error');
+                    }
+                }
+            });
+        });
+        
+        // 删除数据
+        $('.del').on('click', function () {
+            let id = $(this).data('id');
+            swal({
+                title: "确认删除?",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "确认",
+                showLoaderOnConfirm: true,
+                cancelButtonText: "取消",
+                preConfirm: function() {
+                    return new Promise(function(resolve) {
+                        $.ajax({
+                            method: 'post',
+                            url: '/admin/articles/' + id,
+                            data: {
+                                _method:'delete',
+                                _token:'$token'
+                            },
+                            success: function (data) {
+                                $.pjax.reload('#pjax-container');
+                                resolve(data);
+                            }
+                        });
+                    });
+                }
+            }).then(function(result) {
+                var data = result.value;
+                if (typeof data === 'object') {
+                    if (data.status) {
+                        swal(data.message, '', 'success');
+                    } else {
+                        swal(data.message, '', 'error');
+                    }
+                }
+            });
+        });
+SCRIPT;
+    }
+
+    protected function render()
+    {
+        Admin::script($this->script());
+
+        // 所有页面均有预览
+//        $html = "";
+
+//        $html = "<button style='margin-left: 2px;' class='btn btn-xs btn-primary'>预览</button>";
+        $preview_url = route('article.preview',$this->row);
+        $html = "<a href='$preview_url' style='margin-left: 2px;' class='btn btn-xs btn-primary' target='_blank'>预览</a>";
+
+
+        // 只有 2 4 修改操作
+        if (in_array($this->row->status, [2, 4])) {
+            switch ($this->row->type) {
+                case 1:
+                    $url = route('article.edit_pics', $this->row);
+                    $html .= "<a href='$url' style='margin-left: 2px;' class='btn btn-xs btn-info'>修改</a>";
+                    break;
+                case 2:
+                    $url = route('article.edit_ablum', $this->row);
+                    $html .= "<a href='$url' style='margin-left: 2px;' class='btn btn-xs btn-info'>修改</a>";
+                    break;
+                case 6:
+                    break;
+                case 7:
+                    $url = route('toutiao.edit_ablum', $this->row);
+                    $html .= "<a href='$url' style='margin-left: 2px;' class='btn btn-xs btn-info'>修改</a>";
+                    break;
+                default:
+                    $html .= "<a style='margin-left: 2px;' class='btn btn-xs btn-info'>修改</a>";
+                    break;
+            }
+        }
+
+        // 只有审核有撤回
+        if (in_array($this->row->status, [3])) {
+            $html .= "<button style='margin-left: 2px;' data-id='{$this->row->id}' data-status='2' class='btn btn-xs btn-warning change-article-status'>撤回</button>";
+        }
+
+        // 发文结果为失败，允许撤回
+        if(in_array($this->row->d_status, [2])){
+            $html .= "<button style='margin-left: 2px;' data-id='{$this->row->id}' data-status='2' class='btn btn-xs btn-warning change-article-status'>撤回</button>";
+        }
+
+        // 只有 2 4 审核操作
+        if (in_array($this->row->status, [2, 4])) {
+            $html .= "<button style='margin-left: 2px;' data-id='{$this->row->id}' data-status='3' class='btn btn-xs btn-warning change-article-status'>提交审核</button>";
+        }
+
+        // 只有 2 4 删除操作
+        if (in_array($this->row->status, [2, 4])) {
+            $html .= "<button style='margin-left: 2px;' data-id='{$this->row->id}' class='btn btn-xs btn-danger del'>删除</button>";
+        }
+
+        return $html;
+    }
+
+    public function __toString()
+    {
+        return $this->render();
+    }
+}

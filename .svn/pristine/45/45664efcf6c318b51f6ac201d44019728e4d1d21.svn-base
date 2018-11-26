@@ -1,0 +1,64 @@
+<script>
+    // 拖拽组件
+    Vue.component('draggable');
+
+    // 已选商品组件
+    let goodsSelectOperate = {
+        template: `
+            <span>
+                <Poptip placement="top" width="400" transfer style="margin-left: 120px;">
+                    <i-button type="primary">已选 ( @{{ goodsSelect.length }} )</i-button>
+                    <div slot="content" style="white-space: normal !important; height:500px !important; overflow-y:scroll;">
+                        <div style="display: flex; justify-content: flex-end;" v-if="goodsSelect.length != 0">
+                            <span style="color: red; font-size: 20px;font-weight: bold; position: relative; left: -68px;">鼠标左键按住可拖动排序</span>
+                            <i-button type="error" size="small" @click="goodsSelectDelAll">清空全部</i-button>
+                        </div>
+                        <div style="display: flex; justify-content:center;" v-if="goodsSelect.length == 0">暂无数据</div>
+                        <draggable  v-model="goodsSelect" @start="drag=true" @end="drag=false">
+                            <div v-for="(goodsSelect, index) in goodsSelect" :key="index"  style="margin-bottom: 5px; margin-top:5px;height: 100px;">
+                                <div style="width: 25%; float: left;">
+                                    <img :src="goodsSelect.image" width="100%">
+                                </div>
+                                <div style="width: 92%;text-align:left;position: relative;left: 10px;">
+                                    <p style="width: 300px;"><a :href="goodsSelect.goods_url" target="_blank">@{{
+                                        goodsSelect.title }}</a></p>
+                                    <span style="color: red;font-size: 20px;">￥@{{ goodsSelect.price }}</span><br/>
+                                    <span style="color: red;font-size: 15px;">佣金：@{{ commission_earnings(goodsSelect.commission_rate, goodsSelect.price)  }}</span>
+                                    <span style="float:right;"><i-button size="small" type="warning" @click="goodsSelectDel(index)">取消</i-button></span>
+                                </div>
+                            </div>
+                        </draggable>
+                    </div>
+                </Poptip>
+            </span>
+        `,
+        data() {
+            return {
+
+            }
+        },
+        computed: {
+            goodsSelect: {
+                get() {
+                    return this.$store.state.goodsSelect;
+                },
+                set(value) {
+                    this.$store.commit('syncGoodsSelectOrder', value)
+                }
+            }
+        },
+        methods: {
+            goodsSelectDelAll() { // 删除所有已选商品
+                this.$store.commit('delAllGoodsSelect');
+                bus.$emit('syncGoodsSelectStyle');
+            },
+            goodsSelectDel(index) { // 删除单个商品
+                this.$store.commit('delGoodsSelect', index);
+                bus.$emit('syncGoodsSelectStyle');
+            },
+            commission_earnings (value, price) {
+                return this.$store.getters.commission_earnings(value, price);
+            }
+        }
+    };
+</script>

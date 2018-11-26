@@ -1,0 +1,18 @@
+<?php
+
+namespace App\Admin\Extensions\Actions;
+
+use Encore\Admin\Admin;
+use Encore\Admin\Grid\Displayers\AbstractDisplayer;
+
+class ShowTemplate extends AbstractDisplayer
+{
+
+
+    public function display($data = [])
+    {
+        Admin::script($this->script());
+        return $html;
+    }
+
+}

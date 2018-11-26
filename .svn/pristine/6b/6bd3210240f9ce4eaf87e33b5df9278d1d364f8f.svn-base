@@ -1,0 +1,139 @@
+<?php
+
+namespace App\Admin\Controllers\Base;
+
+
+use App\Admin\Models\BaseInfo\ArticleCollectData;
+use App\Admin\Models\BaseInfo\Categories;
+use App\Admin\Requests\BaseApiRequest;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+class BaseApiController extends Controller
+{
+
+    protected $articleRepository;
+    public function __construct()
+    {
+
+        parent::__construct();
+    }
+
+    public function getCategoriesType(){
+        $type = Categories::select(['id','f_id as parent_id','name'])->get();
+
+        return json_encode($type);
+    }
+
+
+    public function getArticleImg(BaseApiRequest $request){
+        $input['first_cid'] = !empty($request['first_cid'])?$request['first_cid']:null;
+        $input['second_cid'] = !empty($request['second_cid'])?$request['second_cid']:null;
+        $input['third_cid'] = !empty($request['third_cid'])?$request['third_cid']:null;
+        $input['data_source'] = !empty($request['data_source'])?$request['data_source']:null;
+        $input['key_type'] = !empty($request['key_type'])?$request['key_type']:0;
+        $input['keywords'] = !empty($request['keywords'])?$request['keywords']:0;
+        $page_count = !empty($request['page_count'])?$request['page_count']:100;
+
+        $article_collects = config('baseinfo.article_collects');
+        $article_collect_datas = config('baseinfo.article_collect_datas');
+        $data = ArticleCollectData::leftJoin($article_collects,$article_collects.'.id','=',$article_collect_datas.'.article_collect_id')
+            ->where($article_collect_datas.'.type',2);
+
+        if(!empty($input['first_cid'])){
+            $data = $data->where($article_collect_datas.'.category_id','=',$input['first_cid']);
+        }
+        if(!empty($input['second_cid'])){
+            $data = $data->where($article_collect_datas.'.category_sub_id','=',$input['second_cid']);
+        }
+        if(!empty($input['third_cid'])){
+            $data = $data->where($article_collect_datas.'.category_third_id','=',$input['third_cid']);
+        }
+
+        if(!empty($input['data_source'])){
+            $data = $data->where($article_collects.'.source','=',$input['data_source']);
+        }
+
+        if(!empty($input['key_type']) && empty($input['keywords'])){
+            $input['keywords'] = trim($input['keywords']);
+            if($input['key_type'] == 1){
+                $data = $data->where($article_collect_datas.'.keywords','=',$input['keywords']);
+            }
+            else{
+                $data = $data->where($article_collects.'.title','=',$input['keywords']);
+            }
+        }
+        $data = $data->select([
+            $article_collect_datas.'.id',
+            $article_collect_datas.'.article_collect_id',
+            $article_collect_datas.'.content',
+            $article_collect_datas.'.type',
+            $article_collect_datas.'.category_id',
+            $article_collect_datas.'.category_sub_id',
+            $article_collect_datas.'.category_third_id',
+            $article_collect_datas.'.keywords',
+            $article_collects.'.title',
+            $article_collects.'.source'
+        ])->orderBy($article_collects.'.publish_time','desc');
+
+        $data = $data->paginate($page_count);
+
+        return json_encode($data);
+    }
+
+    //过去描述接口
+    public function getArticleDescription(BaseApiRequest $request){
+        $input['first_cid'] = !empty($request['first_cid'])?$request['first_cid']:null;
+        $input['second_cid'] = !empty($request['second_cid'])?$request['second_cid']:null;
+        $input['third_cid'] = !empty($request['third_cid'])?$request['third_cid']:null;
+        $input['data_source'] = !empty($request['data_source'])?$request['data_source']:null;
+        $input['key_type'] = !empty($request['key_type'])?$request['key_type']:0;
+        $input['keywords'] = !empty($request['keywords'])?$request['keywords']:0;
+        $page_count = !empty($request['page_count'])?$request['page_count']:100;
+
+        $article_collects = config('baseinfo.article_collects');
+        $article_collect_datas = config('baseinfo.article_collect_datas');
+        $data = ArticleCollectData::leftJoin($article_collects,$article_collects.'.id','=',$article_collect_datas.'.article_collect_id')
+            ->where($article_collect_datas.'.type',1);
+
+        if(!empty($input['first_cid'])){
+            $data = $data->where($article_collect_datas.'.category_id','=',$input['first_cid']);
+        }
+        if(!empty($input['second_cid'])){
+            $data = $data->where($article_collect_datas.'.category_sub_id','=',$input['second_cid']);
+        }
+        if(!empty($input['third_cid'])){
+            $data = $data->where($article_collect_datas.'.category_third_id','=',$input['third_cid']);
+        }
+
+        if(!empty($input['data_source'])){
+            $data = $data->where($article_collects.'.source','=',$input['data_source']);
+        }
+
+        if(!empty($input['key_type']) && empty($input['keywords'])){
+            $input['keywords'] = trim($input['keywords']);
+            if($input['key_type'] == 1){
+                $data = $data->where($article_collect_datas.'.keywords','=',$input['keywords']);
+            }
+            else{
+                $data = $data->where($article_collect_datas.'.content','=',$input['keywords']);
+            }
+        }
+        $data = $data->select([
+            $article_collect_datas.'.id',
+            $article_collect_datas.'.article_collect_id',
+            $article_collect_datas.'.content',
+            $article_collect_datas.'.type',
+            $article_collect_datas.'.category_id',
+            $article_collect_datas.'.category_sub_id',
+            $article_collect_datas.'.category_third_id',
+            $article_collect_datas.'.keywords',
+            $article_collects.'.title',
+            $article_collects.'.source'
+        ])->orderBy($article_collects.'.publish_time','desc');
+
+        $data = $data->paginate($page_count);
+
+        return json_encode($data);
+    }
+}
